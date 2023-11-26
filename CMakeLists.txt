@@ -4,6 +4,20 @@ project(Compiler)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(NOT CMAKE_CXX_EXTENSIONS)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
+set(IR_EXEC ir)
+
+add_executable(${IR_EXEC} main.cpp
+                          lib/module.cpp
+                          lib/operation.cpp
+                          )
+target_include_directories(${IR_EXEC} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/)
+
+
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
