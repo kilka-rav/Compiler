@@ -4,24 +4,42 @@
 #include <vector>
 #include "operation.h"
 #include <memory>
-
+#include <list>
 
 
 class BasicBlock {
 private:
     int id = 0;
-    int prev_id = 0;
+    std::vector<int> prev_id;
     std::vector<int> next_id;
     
-    int getParentID() const { return prev_id; }
-    std::vector<Operation*> ops;
+    std::vector<int> getParentsID() const { return prev_id; }
+    std::list<Operation*> ops;
+    void print_ids() const {
+        std::cout << " prev ids: ";
+        for(auto id : prev_id)
+            std::cout << id << " ";
+        std::cout << " next ids: ";
+        for(auto id : next_id)
+            std::cout << id << " ";
+    }
 public:
     BasicBlock() = default;
-    BasicBlock(int _prev, int _id, int _next) : id(_id), prev_id(_prev), next_id{_next} {}
-    BasicBlock(int _prev, int _id, std::vector<int> _next) : id(_id), prev_id(_prev) { next_id = _next;}
+    //BasicBlock(int _id, int _prev, int _next) : id(_id), prev_id(_prev), next_id{_next} {}
+    BasicBlock(int _id, std::initializer_list<int> _prev, std::initializer_list<int> _next) {
+        id = _id;
+        prev_id = _prev;
+        next_id = _next;
+    }
     void print() const;
     int getID() const { return id; }
     void insert(Operation* op);
+    std::vector<int> getPrev() const {
+        return prev_id;
+    }
+    std::vector<int> getNext() const {
+        return next_id;
+    }
 };
 
 //template <typename ConstantType>

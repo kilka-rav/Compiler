@@ -6,16 +6,16 @@ add_executable(
 )
 
 add_executable(
-  EmptyModule
-  EmptyModule.cpp
+  IRModule
+  IRModule.cpp
   ../lib/module.cpp
   ../lib/operation.cpp
 )
 target_link_libraries(
-  EmptyModule
+  IRModule
   GTest::gtest_main
 )
-target_include_directories(EmptyModule PRIVATE ${CMAKE_SOURCE_DIR}/include/)
+target_include_directories(IRModule PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 
 target_link_libraries(
   dummy_test

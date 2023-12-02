@@ -48,7 +48,7 @@ private:
 public:
     PhiOperation(size_t idx, size_t l, size_t _leftIdx, size_t r, size_t _rightIdx) : leftBB(l), leftIdx(_leftIdx), rightBB(r), rightIdx(_rightIdx), Operation("Phi", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << leftBB << "->" << leftIdx << ", " << rightBB << "->" << rightIdx << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << leftBB << "->%" << leftIdx << ", " << rightBB << "->%" << rightIdx << std::endl;
     }
 };
 
@@ -59,7 +59,7 @@ class CompareOperation : public Operation {
 public:
     CompareOperation(size_t idx, std::string _typeCompare, size_t l, size_t r) : typeCompare(_typeCompare), leftIdx(l), rightIdx(r), Operation("Cmp", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << typeCompare << " : " << leftIdx << ", " << rightIdx << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << typeCompare << " : %" << leftIdx << ", %" << rightIdx << std::endl;
     }
 };
 
@@ -70,7 +70,7 @@ class IfOperation : public Operation {
 public:
     IfOperation(size_t idx, size_t t, size_t f, size_t sign) : trueIdx(t), falseIdx(f), idxBool(sign), Operation("If", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << idxBool << " : " << trueIdx << ", " << falseIdx << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %" << idxBool << " : BasicBlock " << trueIdx << ", BasicBlock " << falseIdx << std::endl;
     }
 };
 
@@ -80,7 +80,7 @@ class BinaryOperation : public Operation {
 public:
     BinaryOperation(size_t idx, std::string _type, size_t l, size_t r) : leftIdx(l), rightIdx(r), Operation(_type, idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : " << leftIdx << ", " << rightIdx << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : %" << leftIdx << ", %" << rightIdx << std::endl;
     }
 };
 
@@ -90,7 +90,7 @@ class CastOperation : public Operation {
 public:
     CastOperation(size_t idx, size_t p, std::string _type) : prev(p), toType(_type), Operation("Cast", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << prev << " -> " << toType << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %" << prev << " -> " << toType << std::endl;
     }
 };
 
@@ -99,7 +99,7 @@ class ReturnOperation : public Operation {
 public:
     ReturnOperation(size_t idx, size_t p) : prev(p), Operation("Return", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << prev << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %" << prev << std::endl;
     }
 };
 

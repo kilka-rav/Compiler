@@ -41,7 +41,9 @@ void Module::setReturnType(const std::string& outType) {
 }
 
 void BasicBlock::print() const {
-    std::cout << "\tBasic Block: id: " << this->getID() << " parent id: " << this->getParentID() << " {" << std::endl;
+    std::cout << "\tBasic Block: id: " << this->getID();
+    print_ids();
+    std::cout  << " {" << std::endl;
     for(auto&& t : ops) {
         t->print();
     }
