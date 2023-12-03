@@ -18,42 +18,17 @@ private:
     
 public:
     BasicBlock() = default;
-    //BasicBlock(int _id, int _prev, int _next) : id(_id), prev_id(_prev), next_id{_next} {}
-    BasicBlock(int _id, std::initializer_list<int> _prev, std::initializer_list<int> _next) {
-        id = _id;
-        prev_id = _prev;
-        next_id = _next;
-    }
+    BasicBlock(int _id, std::initializer_list<int> _prev, std::initializer_list<int> _next);
     void print() const;
     int getID() const { return id; }
     void insert(Operation* op);
-    std::vector<int> getPrev() const {
-        return prev_id;
-    }
-    std::vector<int> getNext() const {
-        return next_id;
-    }
-    void resettingDFS() {
-        number_dfs = -1;
-    }
-    void setNumberDFS(int numDFS) {
-        number_dfs = numDFS;
-    }
-    bool isMarked() {
-        if (number_dfs == -1){
-            return false;
-        }
-        return true;
-    }
+    std::vector<int> getPrev() const;
+    std::vector<int> getNext() const;
+    void resettingDFS();
+    void setNumberDFS(int numDFS);
+    bool isMarked() const;
     int getNumDFS() const;
-    void print_ids() const {
-        std::cout << " prev ids: ";
-        for(auto id : prev_id)
-            std::cout << id << " ";
-        std::cout << " next ids: ";
-        for(auto id : next_id)
-            std::cout << id << " ";
-    }
+    void print_ids() const;
 };
 
 //template <typename ConstantType>
@@ -63,6 +38,7 @@ private:
     std::vector<BasicBlock*> basicBlocks;
     std::string returnType = "void";
     std::vector<std::string> inputs;
+    std::vector<int> immediateDominators;
     std::string printInputs() const;
     bool needDFS = true;
     void markDFS(BasicBlock* bb, int& numDFS);
@@ -77,6 +53,6 @@ public:
     void insert(BasicBlock* bb);
     void DFS();
     void printDFS() const;
+    void buildImmediateDominators();
     virtual ~Module() {}
-    
 };

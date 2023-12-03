@@ -85,3 +85,47 @@ void Module::printDFS() const {
         std::cout << std::endl;
     }
 }
+
+bool BasicBlock::isMarked() const {
+    if (number_dfs == -1){
+        return false;
+    }
+    return true;
+}
+
+void BasicBlock::print_ids() const {
+    std::cout << " prev ids: ";
+    for(auto id : prev_id)
+        std::cout << id << " ";
+    std::cout << " next ids: ";
+    for(auto id : next_id)
+        std::cout << id << " ";
+}
+
+std::vector<int> BasicBlock::getPrev() const {
+    return prev_id;
+}
+std::vector<int> BasicBlock::getNext() const {
+    return next_id;
+}
+void BasicBlock::resettingDFS() {
+    number_dfs = -1;
+}
+
+void BasicBlock::setNumberDFS(int numDFS) {
+    number_dfs = numDFS;
+}
+
+BasicBlock::BasicBlock(int _id, std::initializer_list<int> _prev, std::initializer_list<int> _next) {
+    id = _id;
+    prev_id = _prev;
+    next_id = _next;
+}
+
+void Module::buildImmediateDominators() {
+    if (needDFS) {
+        DFS();
+    }
+    //
+
+}
