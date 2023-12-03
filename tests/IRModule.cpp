@@ -5,7 +5,7 @@
 
 TEST(Factorial, IRTest) {
     /*
-    Module: Factorial(%arg0 : I32, ) -> I64 {
+Module: Factorial(%arg0 : I32, ) -> I64 {
         Basic Block: id: 0 prev ids: 0  next ids: 1  {
           %0.I32 Constant 1
           %1.I32 Constant 2
@@ -23,9 +23,10 @@ TEST(Factorial, IRTest) {
           %9 Add  : %4, %8
           %10 Cast %9 -> I64
           %11 Mul  : %6, %10
+          %12 Jump -> Basic Block 1
         }
         Basic Block: id: 3 prev ids: 3  next ids: 3  {
-          %12 Return %6
+          %13 Return %6
         }
 }
 

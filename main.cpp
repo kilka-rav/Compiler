@@ -4,6 +4,7 @@
 #include "operation.h"
 
 int main() {
+    
     std::string name = "Factorial";
     Module application(name);
     auto s = application.getName();
@@ -43,14 +44,21 @@ int main() {
     BinaryOperation c9 = BinaryOperation(9, "Add", c4.getIndex(), c8.getIndex());
     CastOperation c10 = CastOperation(10, c9.getIndex(), "I64");
     BinaryOperation c11 = BinaryOperation(11, "Mul", c6.getIndex(), c10.getIndex());
+    JumpOperation c12 = JumpOperation(12, b2.getID());
     b3.insert(&c8);
     b3.insert(&c9);
     b3.insert(&c10);
     b3.insert(&c11);
+    b3.insert(&c12);
     
-    ReturnOperation c12 = ReturnOperation(12, c6.getIndex());
-    b4.insert(&c12);
+    ReturnOperation c14 = ReturnOperation(13, c6.getIndex());
+    b4.insert(&c14);
     
     application.print();
+
+    application.printDFS();
+    application.DFS();
+    std::cout << "After DFS" << std::endl;
+    application.printDFS();
 
 }

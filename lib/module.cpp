@@ -30,6 +30,7 @@ std::string Module::printInputs() const {
 
 void Module::insert(BasicBlock* b) {
     basicBlocks.push_back(b);
+    needDFS = true;
 }
 
 void Module::setArgument(const std::string& inputType) {
@@ -38,6 +39,25 @@ void Module::setArgument(const std::string& inputType) {
 
 void Module::setReturnType(const std::string& outType) {
     returnType = outType;
+}
+
+void Module::DFS() {
+    for(auto bb : basicBlocks) {
+        bb->resettingDFS();
+    }
+    int start = 1;
+    markDFS(basicBlocks[0], start);
+    needDFS = false;
+}
+
+void Module::markDFS(BasicBlock* bb, int& numDFS) {
+    if (!bb->isMarked()) {
+        bb->setNumberDFS(numDFS);
+        numDFS++;
+        for(auto child : bb->getNext()) {
+            markDFS(basicBlocks[child], numDFS);
+        }
+    }
 }
 
 void BasicBlock::print() const {
@@ -52,4 +72,16 @@ void BasicBlock::print() const {
 
 void BasicBlock::insert(Operation* op) {
     ops.push_back(op);
+}
+
+int BasicBlock::getNumDFS() const {
+    return number_dfs;
+}
+
+void Module::printDFS() const {
+    for(auto bb : basicBlocks) {
+        std::cout << "id: " << bb->getID() << " numDFS: " << bb->getNumDFS();
+        bb->print_ids();
+        std::cout << std::endl;
+    }
 }
