@@ -11,11 +11,26 @@ add_executable(
   ../lib/module.cpp
   ../lib/operation.cpp
 )
+
+add_executable(
+  DFS
+  DFS.cpp
+  ../lib/module.cpp
+  ../lib/operation.cpp
+)
+
 target_link_libraries(
   IRModule
   GTest::gtest_main
 )
+
+target_link_libraries(
+  DFS
+  GTest::gtest_main
+)
+
 target_include_directories(IRModule PRIVATE ${CMAKE_SOURCE_DIR}/include/)
+target_include_directories(DFS PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 
 target_link_libraries(
   dummy_test
