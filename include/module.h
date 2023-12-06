@@ -13,6 +13,7 @@ private:
     std::vector<int> prev_id;
     std::vector<int> next_id;
     int number_dfs = -1;
+    
     std::vector<int> getParentsID() const { return prev_id; }
     std::list<Operation*> ops;
     
@@ -25,10 +26,14 @@ public:
     std::vector<int> getPrev() const;
     std::vector<int> getNext() const;
     void resettingDFS();
+    void resettingDFSCondition();
     void setNumberDFS(int numDFS);
+    void setNumberDFSCondition(int numDFS);
     bool isMarked() const;
+    bool isMarkedCondition() const;
     int getNumDFS() const;
     void print_ids() const;
+    int number_dfs_condition = -1;
 };
 
 //template <typename ConstantType>
@@ -42,6 +47,10 @@ private:
     std::string printInputs() const;
     bool needDFS = true;
     void markDFS(BasicBlock* bb, int& numDFS);
+    void markDFSCondition(BasicBlock* bb, int& numDFS, int dominator);
+    void DFSCondition(int indexOfDominator);
+    void writeToImmediateDominators(int idx, std::vector<int>& dfsNotMarked);
+    void resettingDFSCondition();
 public:
     Module(std::string& _name) : name(_name) {}
     std::string& getName() const;
@@ -53,6 +62,8 @@ public:
     void insert(BasicBlock* bb);
     void DFS();
     void printDFS() const;
+    void printDFSCondition() const;
     void buildImmediateDominators();
+    bool isDominator(int idxA, int idxB);
     virtual ~Module() {}
 };

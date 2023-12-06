@@ -60,6 +60,20 @@ void Module::markDFS(BasicBlock* bb, int& numDFS) {
     }
 }
 
+void Module::markDFSCondition(BasicBlock* bb, int& numDFS, int dominator) {
+    if (bb->getID() == dominator) {
+        return;
+    }
+    if (!bb->isMarkedCondition()) {
+        bb->setNumberDFSCondition(numDFS);
+        numDFS++;
+        for(auto child : bb->getNext()) {
+            markDFSCondition(basicBlocks[child], numDFS, dominator);
+            
+        }
+    }
+}
+
 void BasicBlock::print() const {
     std::cout << "\tBasic Block: id: " << this->getID();
     print_ids();
@@ -86,8 +100,23 @@ void Module::printDFS() const {
     }
 }
 
+void Module::printDFSCondition() const {
+    for(auto bb : basicBlocks) {
+        std::cout << "id: " << bb->getID() << " numDFS Cond: " << bb->number_dfs_condition;
+        bb->print_ids();
+        std::cout << std::endl;
+    }
+}
+
 bool BasicBlock::isMarked() const {
     if (number_dfs == -1){
+        return false;
+    }
+    return true;
+}
+
+bool BasicBlock::isMarkedCondition() const {
+    if (number_dfs_condition == -1){
         return false;
     }
     return true;
@@ -112,8 +141,16 @@ void BasicBlock::resettingDFS() {
     number_dfs = -1;
 }
 
+void BasicBlock::resettingDFSCondition() {
+    number_dfs_condition = -1;
+}
+
 void BasicBlock::setNumberDFS(int numDFS) {
     number_dfs = numDFS;
+}
+
+void BasicBlock::setNumberDFSCondition(int numDFS) {
+    number_dfs_condition = numDFS;
 }
 
 BasicBlock::BasicBlock(int _id, std::initializer_list<int> _prev, std::initializer_list<int> _next) {
@@ -122,10 +159,25 @@ BasicBlock::BasicBlock(int _id, std::initializer_list<int> _prev, std::initializ
     next_id = _next;
 }
 
-void Module::buildImmediateDominators() {
+void Module::DFSCondition(int indexOfDominator) {
+    int start = 1;
+    markDFSCondition(basicBlocks[0], start, indexOfDominator);
+}
+
+bool Module::isDominator(int idxA, int idxB) {
+    if (idxA == idxB) {
+        return false;
+    }
     if (needDFS) {
         DFS();
     }
-    //
+    resettingDFSCondition();
+    DFSCondition(idxA);
+    return !basicBlocks[idxB]->isMarkedCondition();
+}
 
+void Module::resettingDFSCondition() {
+    for(auto bb : basicBlocks) {
+        bb->resettingDFSCondition();
+    }
 }

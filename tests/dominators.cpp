@@ -1,16 +1,18 @@
-#include <iostream>
-#include "module.h"
-#include "type.h"
-#include "operation.h"
+#include <gtest/gtest.h>
+
+#include "./../include/module.h"
+#include "./../include/type.h"
+#include "./../include/operation.h"
+
 
 int main() {
 
     std::string name = "CheckDominators";
+
     Module application(name);
-    auto s = application.getName();
+    std::cout << application.getName() << std::endl;
     application.setArgument("I32");
     application.setReturnType("I64");
-    std::cout << application.getName() << std::endl;
     
     auto b1 = BasicBlock(0, {0}, {1, 2, 3});
     auto b2 = BasicBlock(1, {0}, {4, 5});
@@ -44,17 +46,15 @@ int main() {
     application.insert(&b11);
     application.insert(&b12);
 
-    //application.printDFS();
-    //application.DFS();
-    std::cout << "After DFS" << std::endl;
-   // application.printDFS();
-
-
-    std::cout << application.isDominator(b1.getID(), b2.getID()) << std::endl;
-    std::cout << application.isDominator(b1.getID(), b12.getID()) << std::endl;
-    std::cout << application.isDominator(b2.getID(), b3.getID()) << std::endl;
-    std::cout << application.isDominator(b2.getID(), b9.getID()) << std::endl;
-    std::cout << application.isDominator(b6.getID(), b9.getID()) << std::endl;
-    std::cout << application.isDominator(b9.getID(), b6.getID()) << std::endl;
-    std::cout << application.isDominator(b9.getID(), b9.getID()) << std::endl;
+    for(int i = 1; i < 12; ++i) {
+        EXPECT_TRUE(application.isDominator(b1.getID(), i));
+    }
+    EXPECT_TRUE(application.isDominator(b1.getID(), b2.getID()));
+    EXPECT_FALSE(application.isDominator(b2.getID(), b12.getID()));
+    EXPECT_FALSE(application.isDominator(b2.getID(), b3.getID()));
+    EXPECT_TRUE(application.isDominator(b2.getID(), b9.getID()));
+    EXPECT_FALSE(application.isDominator(b6.getID(), b9.getID()));
+    EXPECT_FALSE(application.isDominator(b9.getID(), b6.getID()));
+    EXPECT_FALSE(application.isDominator(b9.getID(), b9.getID()));
+    
 }
