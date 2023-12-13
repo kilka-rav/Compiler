@@ -5,6 +5,7 @@
 #include "operation.h"
 #include <memory>
 #include <list>
+#include <set>
 
 
 class BasicBlock {
@@ -36,6 +37,16 @@ public:
     int number_dfs_condition = -1;
 };
 
+struct LoopInfo {
+    int enteringNode;
+    int header;
+    int possibleHeader;
+    std::vector<int> latches;
+    std::set<int> vertex;
+public:
+    LoopInfo(int _possibleHeader) : possibleHeader(_possibleHeader) {}
+};
+
 //template <typename ConstantType>
 class Module {
 private:
@@ -44,6 +55,7 @@ private:
     std::string returnType = "void";
     std::vector<std::string> inputs;
     std::vector<int> immediateDominators;
+    std::vector<LoopInfo> loops;
     std::string printInputs() const;
     bool needDFS = true;
     void markDFS(BasicBlock* bb, int& numDFS);
@@ -51,6 +63,10 @@ private:
     void DFSCondition(int indexOfDominator);
     void writeToImmediateDominators(int idx, std::vector<int>& dfsNotMarked);
     void resettingDFSCondition();
+    void reverseFilling(LoopInfo& loop, int latch);
+    void checkIrreducibleLoop();
+    void fillLoopNodes();
+    void findLatches();
 public:
     Module(std::string& _name) : name(_name) {}
     std::string& getName() const;
@@ -65,5 +81,8 @@ public:
     void printDFSCondition() const;
     void buildImmediateDominators();
     bool isDominator(int idxA, int idxB);
+    void printLoops() const;
     virtual ~Module() {}
+    void loopAnalyzer();
+    std::vector<LoopInfo> getLoops() const;
 };

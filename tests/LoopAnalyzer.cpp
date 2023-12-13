@@ -1,10 +1,10 @@
-#include <iostream>
-#include "module.h"
-#include "type.h"
-#include "operation.h"
+#include <gtest/gtest.h>
+#include "./../include/module.h"
+#include "./../include/type.h"
+#include "./../include/operation.h"
 
-int main() {
 
+TEST(LoopAnalyzer, TEST1) {
     std::string name = "First task";
     Module application(name);
     auto s = application.getName();
@@ -24,5 +24,7 @@ int main() {
     application.insert(&b5);
     
     application.loopAnalyzer();
-    application.printLoops();
+    auto loops = application.getLoops();
+    EXPECT_EQ(1, loops[0].header);
 }
+

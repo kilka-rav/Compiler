@@ -57,6 +57,9 @@ void Module::markDFS(BasicBlock* bb, int& numDFS) {
         for(auto child : bb->getNext()) {
             markDFS(basicBlocks[child], numDFS);
         }
+    } else if (bb->getID() != bb->getNext()[0]){
+        LoopInfo possibleLoop(bb->getID());
+        loops.push_back(possibleLoop);
     }
 }
 
@@ -180,4 +183,78 @@ void Module::resettingDFSCondition() {
     for(auto bb : basicBlocks) {
         bb->resettingDFSCondition();
     }
+}
+
+void Module::printLoops() const {
+    for(auto&& loop : loops) {
+        std::cout << "Possible header: " <<  loop.possibleHeader << " Latches: ";
+        for(auto l : loop.latches) {
+            std::cout << l << " ";
+        }
+        std::cout << "header: " << loop.header << " Entering node: " << loop.enteringNode << std::endl;
+        std::cout << "Vertexs: ";
+        for(auto l : loop.vertex) {
+            std::cout << l << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void Module::findLatches() {
+    for(auto&& loop : loops) {
+        auto curDFS = basicBlocks[loop.possibleHeader]->getNumDFS();
+        for(auto&& prev : basicBlocks[loop.possibleHeader]->getPrev()) {
+            if (curDFS < basicBlocks[prev]->getNumDFS()) {
+                loop.latches.push_back(prev);
+            }
+        }
+    }
+}
+
+void Module::checkIrreducibleLoop() {
+    for(auto&& loop : loops) {
+        bool irreducibleLoop = false;
+        auto possibleHeader = loop.possibleHeader;
+        for(auto&& latch : loop.latches) {
+            if (!isDominator(possibleHeader, latch)) {
+                irreducibleLoop = true;
+            }
+        }
+        if (!irreducibleLoop) {
+            loop.header = loop.possibleHeader;
+            loop.enteringNode = basicBlocks[possibleHeader]->getPrev()[0];
+        }
+    }
+}
+
+void Module::reverseFilling(LoopInfo& loop, int latchIdx) {
+    if (latchIdx == loop.header) {
+        return;
+    }
+    auto prevs = basicBlocks[latchIdx]->getPrev();
+    loop.vertex.insert(latchIdx);
+    for(auto idx : prevs) {
+        reverseFilling(loop, idx);
+    }
+    
+}
+
+void Module::fillLoopNodes() {
+    for(auto&& loop : loops) {
+        for(auto&& latch : loop.latches) {
+            reverseFilling(loop, latch);
+        }
+        loop.vertex.insert(loop.header);
+    }
+}
+
+void Module::loopAnalyzer() {
+    DFS();
+    findLatches();
+    checkIrreducibleLoop();
+    fillLoopNodes();
+}
+
+std::vector<LoopInfo> Module::getLoops() const {
+    return loops;
 }
