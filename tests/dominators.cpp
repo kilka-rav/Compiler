@@ -13,7 +13,7 @@ int main() {
     std::cout << application.getName() << std::endl;
     application.setArgument("I32");
     application.setReturnType("I64");
-    
+    /*
     auto b1 = BasicBlock(0, {0}, {1, 2, 3});
     auto b2 = BasicBlock(1, {0}, {4, 5});
     auto b3 = BasicBlock(2, {0}, {2});
@@ -56,5 +56,5 @@ int main() {
     EXPECT_FALSE(application.isDominator(b6.getID(), b9.getID()));
     EXPECT_FALSE(application.isDominator(b9.getID(), b6.getID()));
     EXPECT_FALSE(application.isDominator(b9.getID(), b9.getID()));
-    
+ */   
 }

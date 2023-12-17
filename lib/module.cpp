@@ -55,9 +55,9 @@ void Module::markDFS(BasicBlock* bb, int& numDFS) {
         bb->setNumberDFS(numDFS);
         numDFS++;
         for(auto child : bb->getNext()) {
-            markDFS(basicBlocks[child], numDFS);
+            markDFS(child, numDFS);
         }
-    } else if (bb->getID() != bb->getNext()[0]){
+    } else if (bb->getID() != bb->getNext()[0]->getID()){
         LoopInfo possibleLoop(bb->getID());
         loops.push_back(possibleLoop);
     }
@@ -71,14 +71,14 @@ void Module::markDFSCondition(BasicBlock* bb, int& numDFS, int dominator) {
         bb->setNumberDFSCondition(numDFS);
         numDFS++;
         for(auto child : bb->getNext()) {
-            markDFSCondition(basicBlocks[child], numDFS, dominator);
+            markDFSCondition(child, numDFS, dominator);
             
         }
     }
 }
 
 void BasicBlock::print() const {
-    std::cout << "\tBasic Block: id: " << this->getID();
+    std::cout << "\tBasic Block: id: " << getID();
     print_ids();
     std::cout  << " {" << std::endl;
     for(auto&& t : ops) {
@@ -134,10 +134,10 @@ void BasicBlock::print_ids() const {
         std::cout << id << " ";
 }
 
-std::vector<int> BasicBlock::getPrev() const {
+std::vector<BasicBlock*> BasicBlock::getPrev() const {
     return prev_id;
 }
-std::vector<int> BasicBlock::getNext() const {
+std::vector<BasicBlock*> BasicBlock::getNext() const {
     return next_id;
 }
 void BasicBlock::resettingDFS() {
@@ -156,7 +156,7 @@ void BasicBlock::setNumberDFSCondition(int numDFS) {
     number_dfs_condition = numDFS;
 }
 
-BasicBlock::BasicBlock(int _id, std::initializer_list<int> _prev, std::initializer_list<int> _next) {
+BasicBlock::BasicBlock(int _id, std::initializer_list<BasicBlock*> _prev, std::initializer_list<BasicBlock*> _next) {
     id = _id;
     prev_id = _prev;
     next_id = _next;
@@ -204,8 +204,8 @@ void Module::findLatches() {
     for(auto&& loop : loops) {
         auto curDFS = basicBlocks[loop.possibleHeader]->getNumDFS();
         for(auto&& prev : basicBlocks[loop.possibleHeader]->getPrev()) {
-            if (curDFS < basicBlocks[prev]->getNumDFS()) {
-                loop.latches.push_back(prev);
+            if (curDFS < basicBlocks[prev->getID()]->getNumDFS()) {
+                loop.latches.push_back(prev->getID());
             }
         }
     }
@@ -222,7 +222,7 @@ void Module::checkIrreducibleLoop() {
         }
         if (!irreducibleLoop) {
             loop.header = loop.possibleHeader;
-            loop.enteringNode = basicBlocks[possibleHeader]->getPrev()[0];
+            loop.enteringNode = basicBlocks[possibleHeader]->getPrev()[0]->getID();
         }
     }
 }
@@ -234,7 +234,7 @@ void Module::reverseFilling(LoopInfo& loop, int latchIdx) {
     auto prevs = basicBlocks[latchIdx]->getPrev();
     loop.vertex.insert(latchIdx);
     for(auto idx : prevs) {
-        reverseFilling(loop, idx);
+        reverseFilling(loop, idx->getID());
     }
     
 }

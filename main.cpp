@@ -11,6 +11,7 @@ int main() {
     application.setArgument("I32");
     application.setReturnType("I64");
     
+    /*
     auto b1 = BasicBlock(0, {0}, {1});
     auto b2 = BasicBlock(1, {0, 4}, {2, 3});
     auto b3 = BasicBlock(2, {1}, {2});
@@ -25,4 +26,8 @@ int main() {
     
     application.loopAnalyzer();
     application.printLoops();
+*/
+    auto* b10 = application.create<BasicBlock>();
+    application.print();
+    delete b10;
 }

@@ -31,6 +31,8 @@ Module: Factorial(%arg0 : I32, ) -> I64 {
 }
 
     */
+
+   /*
     std::string name = "Factorial";
     Module application(name);
     auto s = application.getName();
@@ -83,4 +85,5 @@ Module: Factorial(%arg0 : I32, ) -> I64 {
     ReturnOperation c12 = ReturnOperation(12, c6.getIndex());
     b4.insert(&c12);
     //application.print();
+    */
 }

@@ -11,21 +11,21 @@
 class BasicBlock {
 private:
     int id = 0;
-    std::vector<int> prev_id;
-    std::vector<int> next_id;
+    std::vector<BasicBlock*> prev_id;
+    std::vector<BasicBlock*> next_id;
     int number_dfs = -1;
     
-    std::vector<int> getParentsID() const { return prev_id; }
+    std::vector<BasicBlock*> getParentsID() const { return prev_id; }
     std::list<Operation*> ops;
     
 public:
     BasicBlock() = default;
-    BasicBlock(int _id, std::initializer_list<int> _prev, std::initializer_list<int> _next);
+    BasicBlock(int _id, std::initializer_list<BasicBlock*> _prev, std::initializer_list<BasicBlock*> _next);
     void print() const;
     int getID() const { return id; }
     void insert(Operation* op);
-    std::vector<int> getPrev() const;
-    std::vector<int> getNext() const;
+    std::vector<BasicBlock*> getPrev() const;
+    std::vector<BasicBlock*> getNext() const;
     void resettingDFS();
     void resettingDFSCondition();
     void setNumberDFS(int numDFS);
@@ -85,4 +85,26 @@ public:
     virtual ~Module() {}
     void loopAnalyzer();
     std::vector<LoopInfo> getLoops() const;
+    template <typename Type, typename ...Args>
+    Type* create(Args... args) {
+        std::cout << "Cannot find constructor" << std::endl;
+        return nullptr;
+    }
 };
+
+
+template <>
+inline BasicBlock* Module::create<BasicBlock>(std::initializer_list<BasicBlock*> _prev, std::initializer_list<BasicBlock*> _next) {
+    std::cout << "start creating" << std::endl;
+    BasicBlock* bb = new BasicBlock(basicBlocks.size(), {}, {});
+    return bb;
+}
+
+
+template <>
+inline BasicBlock* Module::create<BasicBlock>() {
+    std::cout << "start creating 2" << std::endl;
+    BasicBlock* bb = new BasicBlock(basicBlocks.size(), {}, {});
+    basicBlocks.push_back(bb);
+    return bb;
+}
