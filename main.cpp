@@ -1,7 +1,7 @@
 #include <iostream>
 #include "module.h"
 #include "type.h"
-#include "operation.h"
+
 
 int main() {
 
@@ -27,7 +27,23 @@ int main() {
     application.loopAnalyzer();
     application.printLoops();
 */
-    auto* b10 = application.create<BasicBlock>();
+    auto* b1 = application.create<BasicBlock>();
+    auto* b2 = application.create<BasicBlock>();
+    auto* b3 = application.create<BasicBlock>();
+    auto* b4 = application.create<BasicBlock>();
+    b1->addSucessor({b2});
+    b2->addPredessor({b1});
+    b2->addSucessor({b3, b4});
+    b3->addPredessor({b2});
+    b4->addPredessor({b2});
+
+    
+
+
+
     application.print();
-    delete b10;
+    delete b1;
+    delete b2;
+    delete b3;
+    delete b4;
 }

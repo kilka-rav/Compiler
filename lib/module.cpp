@@ -11,7 +11,7 @@ std::string& Module::getName() const {
 
 void Module::print() const{
     std::cout << "Module: " << name << "(" << printInputs() << ") -> " << returnType <<" {" << std::endl;
-    for(auto& bb : basicBlocks) {
+    for(auto&& bb : basicBlocks) {
         bb->print();
     }
     std::cout << "}" << std::endl;
@@ -127,11 +127,11 @@ bool BasicBlock::isMarkedCondition() const {
 
 void BasicBlock::print_ids() const {
     std::cout << " prev ids: ";
-    for(auto id : prev_id)
-        std::cout << id << " ";
+    for(auto&& id : prev_id)
+        std::cout << id->getID() << " ";
     std::cout << " next ids: ";
-    for(auto id : next_id)
-        std::cout << id << " ";
+    for(auto&& id : next_id)
+        std::cout << id->getID() << " ";
 }
 
 std::vector<BasicBlock*> BasicBlock::getPrev() const {
@@ -154,6 +154,18 @@ void BasicBlock::setNumberDFS(int numDFS) {
 
 void BasicBlock::setNumberDFSCondition(int numDFS) {
     number_dfs_condition = numDFS;
+}
+
+void BasicBlock::addPredessor(std::initializer_list<BasicBlock*> bbs) {
+    for(auto&& bb : bbs) {
+        prev_id.push_back(bb);
+    }
+}
+
+void BasicBlock::addSucessor(std::initializer_list<BasicBlock*> bbs) {
+    for(auto&& bb : bbs) {
+        next_id.push_back(bb);
+    }
 }
 
 BasicBlock::BasicBlock(int _id, std::initializer_list<BasicBlock*> _prev, std::initializer_list<BasicBlock*> _next) {

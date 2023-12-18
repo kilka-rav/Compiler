@@ -12,7 +12,7 @@ set(IR_EXEC ir)
 
 add_executable(${IR_EXEC} main.cpp
                           lib/module.cpp
-                          lib/operation.cpp
+                    
                           )
 target_include_directories(${IR_EXEC} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 

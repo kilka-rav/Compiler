@@ -9,28 +9,24 @@ add_executable(
   loopAnalyzer
   LoopAnalyzer.cpp
   ../lib/module.cpp
-  ../lib/operation.cpp
 )
 
 add_executable(
   IRModule
   IRModule.cpp
-  ../lib/module.cpp
-  ../lib/operation.cpp
+  ../lib/module.cpp/
 )
 
 add_executable(
   dominators
   dominators.cpp
   ../lib/module.cpp
-  ../lib/operation.cpp
 )
 
 add_executable(
   DFS
   DFS.cpp
   ../lib/module.cpp
-  ../lib/operation.cpp
 )
 
 target_link_libraries(

@@ -2,10 +2,11 @@
 
 #include <iostream>
 #include <vector>
-#include "operation.h"
 #include <memory>
 #include <list>
 #include <set>
+
+class Operation;
 
 
 class BasicBlock {
@@ -26,6 +27,8 @@ public:
     void insert(Operation* op);
     std::vector<BasicBlock*> getPrev() const;
     std::vector<BasicBlock*> getNext() const;
+    void addSucessor(std::initializer_list<BasicBlock*> bbs);
+    void addPredessor(std::initializer_list<BasicBlock*> bbs);
     void resettingDFS();
     void resettingDFSCondition();
     void setNumberDFS(int numDFS);
@@ -108,3 +111,111 @@ inline BasicBlock* Module::create<BasicBlock>() {
     basicBlocks.push_back(bb);
     return bb;
 }
+
+class Operation {
+private:
+    std::string name;
+    int idx;
+public:
+    int getIndex() const;
+    virtual void print() const = 0;
+    Operation(std::string _name, int _idx) : name(_name), idx(_idx) {}
+    std::string getName() const;
+};
+
+class ConstantOperation : public Operation {
+private:
+    uint64_t value;
+    std::string DType;
+public:
+    ConstantOperation(int _idx, uint64_t _value, std::string dt) : value(_value), Operation("Constant", _idx), DType(dt) {}
+    ConstantOperation(uint64_t _value, std::string dt) : value(_value), Operation("Constant", 0), DType(dt) {}
+    ConstantOperation() = default;
+    void print() const {
+        std::cout << "\t  %" <<  getIndex() << "." << DType << " Constant " << value << std::endl;
+    }    
+};
+
+class JumpOperation : public Operation {
+    BasicBlock* toBasicBlock;
+public:
+    JumpOperation(int idx, BasicBlock* id) : toBasicBlock(id), Operation("Jump", idx) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() <<  " -> Basic Block " << toBasicBlock << std::endl;
+    }
+};
+
+class PhiOperation : public Operation {
+private:
+    std::vector<std::pair<BasicBlock*, int>> inputs;
+public:
+    PhiOperation(int idx, std::vector<std::pair<BasicBlock*, int>> _inputs) : inputs(_inputs), Operation("Phi", idx) {}
+    void print() const {
+        std::cout << "need to create" << std::endl;
+        //std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << leftBB << "->%" << leftIdx << ", " << rightBB << "->%" << rightIdx << std::endl;
+    }
+};
+
+class CompareOperation : public Operation {
+    std::string typeCompare;//replace enum
+    std::pair<BasicBlock*, int> left;
+    std::pair<BasicBlock*, int> right;
+public:
+    CompareOperation(int idx, std::string _typeCompare, std::pair<BasicBlock*, int> l, std::pair<BasicBlock*, int>r) : typeCompare(_typeCompare), left(l), right(r), Operation("Cmp", idx) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << typeCompare << " : %[" << left.first->getID() << " : " << left.second << "], %[" 
+            << right.first->getID() << " : " << right.second << "]" << std::endl;
+    }
+};
+
+class IfOperation : public Operation {
+    std::pair<BasicBlock*, int> trueIdx;
+    std::pair<BasicBlock*, int> falseIdx;
+    std::pair<BasicBlock*, int> idxBool;
+public:
+    IfOperation(int idx, std::pair<BasicBlock*, int> t, std::pair<BasicBlock*, int> f, std::pair<BasicBlock*, int> sign) : trueIdx(t), falseIdx(f), idxBool(sign), Operation("If", idx) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %[" << idxBool.first->getID() << " : " << idxBool.second << "] : BasicBlock %[" 
+            << trueIdx.first->getID() << " : " << trueIdx.second << "] : BasicBlock %[" << ", BasicBlock " << 
+            falseIdx.first->getID() << " : " << falseIdx.second << "]" << std::endl;
+    }
+};
+
+class BinaryOperation : public Operation {
+    std::pair<BasicBlock*, int> left;
+    std::pair<BasicBlock*, int> right;
+public:
+    BinaryOperation(int idx, std::string _type, std::pair<BasicBlock*, int> l, std::pair<BasicBlock*, int> r) : left(l), right(r), Operation(_type, idx) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : %[" << left.first->getID() << " : " << left.second << "], %[" 
+            << right.first->getID() << " : " << right.second << "]" << std::endl;
+    }
+};
+
+class CastOperation : public Operation {
+    std::string toType;
+    std::pair<BasicBlock*, int> prev;
+public:
+    CastOperation(int idx, std::pair<BasicBlock*, int> p, std::string _type) : prev(p), toType(_type), Operation("Cast", idx) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %[" << prev.first->getID() << ": " << prev.second << "] -> " << toType << std::endl;
+    }
+};
+
+class ReturnOperation : public Operation {
+    std::pair<BasicBlock*, int> prev;
+public:
+    ReturnOperation(int idx, std::pair<BasicBlock*, int> p) : prev(p), Operation("Return", idx) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %[" << prev.first->getID() << ": " << prev.second << "]" << std::endl;
+    }
+};
+
+class MoveOperation : public Operation {
+    std::string prev;
+public:
+    MoveOperation(int idx, std::string p) : prev(p), Operation("Move", idx) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %" << prev << std::endl;
+    }
+};

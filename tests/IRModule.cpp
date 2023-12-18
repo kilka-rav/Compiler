@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include "./../include/module.h"
 #include "./../include/type.h"
-#include "./../include/operation.h"
 
 TEST(Factorial, IRTest) {
     /*
