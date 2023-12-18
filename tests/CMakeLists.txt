@@ -1,5 +1,8 @@
 enable_testing()
 
+add_library(module ../lib/module.cpp
+                   ../include/module.h)       
+
 add_executable(
   dummy_test
   dummy_test.cpp
@@ -31,6 +34,7 @@ add_executable(
 
 target_link_libraries(
   IRModule
+  module
   GTest::gtest_main
 )
 

@@ -98,7 +98,6 @@ public:
 
 template <>
 inline BasicBlock* Module::create<BasicBlock>(std::initializer_list<BasicBlock*> _prev, std::initializer_list<BasicBlock*> _next) {
-    std::cout << "start creating" << std::endl;
     BasicBlock* bb = new BasicBlock(basicBlocks.size(), {}, {});
     return bb;
 }
@@ -106,7 +105,6 @@ inline BasicBlock* Module::create<BasicBlock>(std::initializer_list<BasicBlock*>
 
 template <>
 inline BasicBlock* Module::create<BasicBlock>() {
-    std::cout << "start creating 2" << std::endl;
     BasicBlock* bb = new BasicBlock(basicBlocks.size(), {}, {});
     basicBlocks.push_back(bb);
     return bb;
@@ -141,18 +139,22 @@ class JumpOperation : public Operation {
 public:
     JumpOperation(int idx, BasicBlock* id) : toBasicBlock(id), Operation("Jump", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() <<  " -> Basic Block " << toBasicBlock << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() <<  " -> Basic Block " << toBasicBlock->getID() << std::endl;
     }
 };
 
 class PhiOperation : public Operation {
 private:
-    std::vector<std::pair<BasicBlock*, int>> inputs;
+    std::vector<BasicBlock*> inputBB;
+    std::vector<int> ops;
 public:
-    PhiOperation(int idx, std::vector<std::pair<BasicBlock*, int>> _inputs) : inputs(_inputs), Operation("Phi", idx) {}
+    PhiOperation(int idx, std::initializer_list<BasicBlock*> _inputs, std::initializer_list<int> _ops) : inputBB(_inputs), ops(_ops), Operation("Phi", idx) {}
     void print() const {
-        std::cout << "need to create" << std::endl;
-        //std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << leftBB << "->%" << leftIdx << ", " << rightBB << "->%" << rightIdx << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " ";
+        for(size_t i = 0; i < inputBB.size(); ++i) {
+            std::cout << "[" << inputBB[i]->getID() << " : %" << ops[i] << "], ";
+        }
+        std::cout << std::endl;
     }
 };
 
@@ -163,21 +165,20 @@ class CompareOperation : public Operation {
 public:
     CompareOperation(int idx, std::string _typeCompare, std::pair<BasicBlock*, int> l, std::pair<BasicBlock*, int>r) : typeCompare(_typeCompare), left(l), right(r), Operation("Cmp", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << typeCompare << " : %[" << left.first->getID() << " : " << left.second << "], %[" 
-            << right.first->getID() << " : " << right.second << "]" << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << typeCompare << " : [" << left.first->getID() << " : %" << left.second << "], [" 
+            << right.first->getID() << " : %" << right.second << "]" << std::endl;
     }
 };
 
 class IfOperation : public Operation {
-    std::pair<BasicBlock*, int> trueIdx;
-    std::pair<BasicBlock*, int> falseIdx;
+    BasicBlock* trueIdx;
+    BasicBlock* falseIdx;
     std::pair<BasicBlock*, int> idxBool;
 public:
-    IfOperation(int idx, std::pair<BasicBlock*, int> t, std::pair<BasicBlock*, int> f, std::pair<BasicBlock*, int> sign) : trueIdx(t), falseIdx(f), idxBool(sign), Operation("If", idx) {}
+    IfOperation(int idx, BasicBlock* t, BasicBlock* f, std::pair<BasicBlock*, int> sign) : trueIdx(t), falseIdx(f), idxBool(sign), Operation("If", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %[" << idxBool.first->getID() << " : " << idxBool.second << "] : BasicBlock %[" 
-            << trueIdx.first->getID() << " : " << trueIdx.second << "] : BasicBlock %[" << ", BasicBlock " << 
-            falseIdx.first->getID() << " : " << falseIdx.second << "]" << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " [" << idxBool.first->getID() << " : %" << idxBool.second << "] -> " 
+            << trueIdx->getID() << ", " << falseIdx->getID() << std::endl;
     }
 };
 
@@ -187,8 +188,8 @@ class BinaryOperation : public Operation {
 public:
     BinaryOperation(int idx, std::string _type, std::pair<BasicBlock*, int> l, std::pair<BasicBlock*, int> r) : left(l), right(r), Operation(_type, idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : %[" << left.first->getID() << " : " << left.second << "], %[" 
-            << right.first->getID() << " : " << right.second << "]" << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : [" << left.first->getID() << " : %" << left.second << "], [" 
+            << right.first->getID() << " : %" << right.second << "]" << std::endl;
     }
 };
 
@@ -207,7 +208,7 @@ class ReturnOperation : public Operation {
 public:
     ReturnOperation(int idx, std::pair<BasicBlock*, int> p) : prev(p), Operation("Return", idx) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " %[" << prev.first->getID() << ": " << prev.second << "]" << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " [" << prev.first->getID() << ": %" << prev.second << "]" << std::endl;
     }
 };
 

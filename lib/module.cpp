@@ -270,3 +270,11 @@ void Module::loopAnalyzer() {
 std::vector<LoopInfo> Module::getLoops() const {
     return loops;
 }
+
+int Operation::getIndex() const {
+    return idx;
+}
+
+std::string Operation::getName() const {
+    return name;
+}
