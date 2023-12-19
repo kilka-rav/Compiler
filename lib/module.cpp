@@ -243,6 +243,9 @@ void Module::printLoops() const {
         for(auto l : loop.vertex) {
             std::cout << l << " ";
         }
+        if (loop.nestedLoop != -1) {
+            std::cout << "Header of nested loop: " << loop.nestedLoop << std::endl;
+        }
         std::cout << std::endl;
     }
 }
@@ -267,31 +270,57 @@ void Module::checkIrreducibleLoop() {
                 irreducibleLoop = true;
             }
         }
-        if (!irreducibleLoop) {
+        if (!irreducibleLoop && checkConditions(loop.possibleHeader)) {
             loop.header = loop.possibleHeader;
             loop.enteringNode = basicBlocks[possibleHeader]->getPrev()[0]->getID();
         }
     }
 }
 
-void Module::reverseFilling(LoopInfo& loop, int latchIdx) {
-    if (latchIdx == loop.header) {
+bool Module::checkConditions(int possibleHeader) {
+    for(auto&& prev : basicBlocks[possibleHeader]->getPrev()) {
+        if (isDominator(possibleHeader, prev->getID())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Module::reverseFilling(int loopIndex, int latchIdx) {
+    if (latchIdx == loops[loopIndex].header) {
         return;
     }
+    if (loopIndex != loops.size() - 1) {
+        if (latchIdx == loops[loopIndex + 1].latches[0]) {
+            loops[loopIndex].nestedLoop = loops[loopIndex + 1].header;
+            latchIdx = loops[loopIndex + 1].enteringNode;
+            if (latchIdx == loops[loopIndex].header) {
+                return;
+            }
+        }
+    }
     auto prevs = basicBlocks[latchIdx]->getPrev();
-    loop.vertex.insert(latchIdx);
+    loops[loopIndex].vertex.insert(latchIdx);
     for(auto idx : prevs) {
-        reverseFilling(loop, idx->getID());
+        reverseFilling(loopIndex, idx->getID());
     }
     
 }
 
 void Module::fillLoopNodes() {
-    for(auto&& loop : loops) {
-        for(auto&& latch : loop.latches) {
-            reverseFilling(loop, latch);
+    for(int i = loops.size() - 1; i >= 0; i--) {
+        for(auto&& latch : loops[i].latches) {
+            reverseFilling(i, latch);
         }
-        loop.vertex.insert(loop.header);
+        loops[i].vertex.insert(loops[i].header);
+    }
+}
+
+void Module::deletePossibleHeader() {
+    for(int i = 0; i < loops.size(); ++i) {
+        if (loops[i].header != loops[i].possibleHeader) {
+            loops.erase(loops.begin() + i);
+        }
     }
 }
 
@@ -299,6 +328,7 @@ void Module::loopAnalyzer() {
     DFS();
     findLatches();
     checkIrreducibleLoop();
+    deletePossibleHeader();
     fillLoopNodes();
 }
 

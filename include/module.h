@@ -41,11 +41,12 @@ public:
 };
 
 struct LoopInfo {
-    int enteringNode;
-    int header;
-    int possibleHeader;
+    int enteringNode = -1;
+    int header = -1;
+    int possibleHeader = -1;
     std::vector<int> latches;
     std::set<int> vertex;
+    int nestedLoop = -1;//if >-1, then nested loop = header of nested loop
 public:
     LoopInfo(int _possibleHeader) : possibleHeader(_possibleHeader) {}
 };
@@ -61,17 +62,19 @@ private:
     std::vector<int> vertexDFS;
     std::vector<LoopInfo> loops;
     std::string printInputs() const;
+    void deletePossibleHeader();
     bool needDFS = true;
     void markDFS(BasicBlock* bb, int& numDFS);
     void markDFSCondition(BasicBlock* bb, int& numDFS, int dominator);
     void DFSCondition(int indexOfDominator);
     void writeToImmediateDominators(int idx, std::vector<int>& dfsNotMarked);
     void resettingDFSCondition();
-    void reverseFilling(LoopInfo& loop, int latch);
+    void reverseFilling(int loopIndex, int latch);
     void checkIrreducibleLoop();
     void fillLoopNodes();
     void findLatches();
     int getImmediateDominator(BasicBlock* bb);
+    bool checkConditions(int possibleHeader);
 public:
     Module(std::string& _name) : name(_name) {}
     std::string& getName() const;
