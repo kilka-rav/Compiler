@@ -45,7 +45,9 @@ void Module::DFS() {
     for(auto bb : basicBlocks) {
         bb->resettingDFS();
     }
-    int start = 1;
+    vertexDFS.clear();
+    vertexDFS.resize(basicBlocks.size());
+    int start = 0;
     markDFS(basicBlocks[0], start);
     needDFS = false;
 }
@@ -53,6 +55,7 @@ void Module::DFS() {
 void Module::markDFS(BasicBlock* bb, int& numDFS) {
     if (!bb->isMarked()) {
         bb->setNumberDFS(numDFS);
+        vertexDFS[numDFS] = bb->getID();
         numDFS++;
         for(auto child : bb->getNext()) {
             markDFS(child, numDFS);
@@ -177,6 +180,36 @@ BasicBlock::BasicBlock(int _id, std::initializer_list<BasicBlock*> _prev, std::i
 void Module::DFSCondition(int indexOfDominator) {
     int start = 1;
     markDFSCondition(basicBlocks[0], start, indexOfDominator);
+}
+
+int Module::getImmediateDominator(BasicBlock* bb) {
+    int numDFS = bb->getNumDFS();
+    auto idx = bb->getID();
+    if (numDFS == 0) {
+        return vertexDFS[0];
+    }
+    for(int i = numDFS - 1; i > 0; i--) {
+        if (isDominator(vertexDFS[i], idx)) {
+            return vertexDFS[i];
+        }
+    }
+    return vertexDFS[0];
+}
+
+void Module::buildDomtree() {
+    if (needDFS) {
+        DFS();
+    }
+    immediateDominators.clear();
+    immediateDominators.resize(basicBlocks.size());
+    for(auto&& bb : basicBlocks) {
+        auto idx = getImmediateDominator(bb);
+        immediateDominators[bb->getID()] = idx;
+    }
+    std::cout << "Print: " << immediateDominators.size() <<  std::endl;
+    for(int i = 0; i < immediateDominators.size(); ++i) {
+        std::cout << immediateDominators[i] << std::endl;
+    }
 }
 
 bool Module::isDominator(int idxA, int idxB) {

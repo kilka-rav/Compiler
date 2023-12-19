@@ -3,7 +3,6 @@
 #include "./../include/type.h"
 
 
-TEST(Marked, DFSTest) {
 /*
 id: 0 numDFS: -1 prev ids: 0  next ids: 1 2 3 
 id: 1 numDFS: -1 prev ids: 0  next ids: 4 5 
@@ -33,7 +32,7 @@ id: 11 numDFS: 11 prev ids: 6  next ids: 11
 
 */
 
-/*
+TEST(Dominators, DFS) {
     std::string name = "DFS";
     Module application(name);
     auto s = application.getName();
@@ -41,41 +40,50 @@ id: 11 numDFS: 11 prev ids: 6  next ids: 11
     application.setReturnType("I64");
     std::cout << application.getName() << std::endl;
     
-    auto b1 = BasicBlock(0, {0}, {1, 2, 3});
-    auto b2 = BasicBlock(1, {0}, {4, 5});
-    auto b3 = BasicBlock(2, {0}, {2});
-    auto b4 = BasicBlock(3, {0}, {6, 7});
+    auto b1 = application.create<BasicBlock>();
 
-    auto b5 = BasicBlock(4, {1}, {8, 9});
-    auto b6 = BasicBlock(5, {1}, {5});
+    auto b2 = application.create<BasicBlock>();
+    auto b3 = application.create<BasicBlock>();
+    auto b4 = application.create<BasicBlock>();
 
-    auto b7 = BasicBlock(6, {3}, {10, 11});
-    auto b8 = BasicBlock(7, {3}, {7});
+    auto b5 = application.create<BasicBlock>();
+    auto b6 = application.create<BasicBlock>();
 
-    auto b9 = BasicBlock(8, {4}, {8});
-    auto b10 = BasicBlock(9, {4}, {9});
+    auto b7 = application.create<BasicBlock>();
+    auto b8 = application.create<BasicBlock>();
 
-    auto b11 = BasicBlock(10, {6}, {10});
-    auto b12 = BasicBlock(11, {6}, {11});
+    auto b9 = application.create<BasicBlock>();
+    auto b10 = application.create<BasicBlock>();
+
+    auto b11 = application.create<BasicBlock>();
+    auto b12 = application.create<BasicBlock>();
     
-    application.insert(&b1);
-    application.insert(&b2);
-    application.insert(&b3);
-    application.insert(&b4);
+    b1->addSucessor({b2, b3, b4});
 
-    application.insert(&b5);
-    application.insert(&b6);
-    application.insert(&b7);
-    application.insert(&b8);
+    b2->addPredessor({b1});
+    b2->addSucessor({b5, b6});
+    b3->addPredessor({b1});
+    b4->addPredessor({b1});
+    b4->addSucessor({b7, b8});
+    
+    b5->addPredessor({b2});
+    b5->addSucessor({b9, b10});
 
-    application.insert(&b9);
-    application.insert(&b10);
-    application.insert(&b11);
-    application.insert(&b12);
+    b6->addPredessor({b2});
+
+    b7->addPredessor({b4});
+    b7->addSucessor({b11, b12});
+
+    b8->addPredessor({b4});
+
+    b9->addPredessor({b5});
+
+    b10->addPredessor({b5});
+    b11->addPredessor({b7});
+    b12->addPredessor({b7});
 
     //application.printDFS();
     application.DFS();
-    std::cout << "After DFS" << std::endl;
+    //std::cout << "After DFS" << std::endl;
     //application.printDFS();
-    */
 }

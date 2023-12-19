@@ -58,6 +58,7 @@ private:
     std::string returnType = "void";
     std::vector<std::string> inputs;
     std::vector<int> immediateDominators;
+    std::vector<int> vertexDFS;
     std::vector<LoopInfo> loops;
     std::string printInputs() const;
     bool needDFS = true;
@@ -70,6 +71,7 @@ private:
     void checkIrreducibleLoop();
     void fillLoopNodes();
     void findLatches();
+    int getImmediateDominator(BasicBlock* bb);
 public:
     Module(std::string& _name) : name(_name) {}
     std::string& getName() const;
@@ -87,6 +89,7 @@ public:
     void printLoops() const;
     virtual ~Module() {}
     void loopAnalyzer();
+    void buildDomtree();
     std::vector<LoopInfo> getLoops() const;
     template <typename Type, typename ...Args>
     Type* create(Args... args) {

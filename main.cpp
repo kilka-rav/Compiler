@@ -5,76 +5,63 @@
 
 int main() {
 
-    std::string name = "First task";
+   std::string name = "DFS";
     Module application(name);
     auto s = application.getName();
     application.setArgument("I32");
     application.setReturnType("I64");
+    std::cout << application.getName() << std::endl;
     
-    /*
-    auto b1 = BasicBlock(0, {0}, {1});
-    auto b2 = BasicBlock(1, {0, 4}, {2, 3});
-    auto b3 = BasicBlock(2, {1}, {2});
-    auto b4 = BasicBlock(3, {1}, {4});
-    auto b5 = BasicBlock(4, {3}, {1});
+    auto b1 = application.create<BasicBlock>();
 
-    application.insert(&b1);
-    application.insert(&b2);
-    application.insert(&b3);
-    application.insert(&b4);
-    application.insert(&b5);
+    auto b2 = application.create<BasicBlock>();
+    auto b3 = application.create<BasicBlock>();
+    auto b4 = application.create<BasicBlock>();
+
+    auto b5 = application.create<BasicBlock>();
+    auto b6 = application.create<BasicBlock>();
+
+    auto b7 = application.create<BasicBlock>();
+    auto b8 = application.create<BasicBlock>();
+
+    auto b9 = application.create<BasicBlock>();
+    auto b10 = application.create<BasicBlock>();
+
+    auto b11 = application.create<BasicBlock>();
+    auto b12 = application.create<BasicBlock>();
     
-    application.loopAnalyzer();
-    application.printLoops();
-*/
-    auto* b1 = application.create<BasicBlock>();
-    auto* b2 = application.create<BasicBlock>();
-    auto* b3 = application.create<BasicBlock>();
-    auto* b4 = application.create<BasicBlock>();
-    b1->addSucessor({b2});
+    b1->addSucessor({b2, b3, b4});
+
     b2->addPredessor({b1});
-    b2->addSucessor({b3, b4});
-    b3->addPredessor({b2});
-    b4->addPredessor({b2});
-
-    ConstantOperation c1 = ConstantOperation(0, 1, "I32");
-    ConstantOperation c2 = ConstantOperation(1, 2, "I32");
-    MoveOperation c13 = MoveOperation(2, "arg0");
-    JumpOperation c3 = JumpOperation(3, b2);
-
-    b1->insert(&c1);
-    b1->insert(&c2);
-    b1->insert(&c13);
-    b1->insert(&c3);
-
+    b2->addSucessor({b5, b6});
+    b3->addPredessor({b1});
+    b4->addPredessor({b1});
+    b4->addSucessor({b7, b8});
     
-    PhiOperation c4 = PhiOperation(4, {b1, b3}, {c2.getIndex(), 7});
-    CompareOperation c5 = CompareOperation(5, "le", std::make_pair(b2, c4.getIndex()), std::make_pair(b1, c13.getIndex()));
-    PhiOperation c6 = PhiOperation(6, {b1, b3}, {c1.getIndex(), 9});
-    IfOperation c7 = IfOperation(7, b3, b4, std::make_pair(b2, c5.getIndex()));
-    b2->insert(&c4);
-    b2->insert(&c5);
-    b2->insert(&c6);
-    b2->insert(&c7);
+    b5->addPredessor({b2});
+    b5->addSucessor({b9, b10});
 
-    ConstantOperation c8 = ConstantOperation(8, 1, "I32");
-    BinaryOperation c9 = BinaryOperation(9, "Add", std::make_pair(b2, c4.getIndex()), std::make_pair(b3, c7.getIndex()));
-    CastOperation c10 = CastOperation(10, std::make_pair(b3, c9.getIndex()), "I64");
-    BinaryOperation c11 = BinaryOperation(11, "Mul", std::make_pair(b2, c6.getIndex()), std::make_pair(b3, c10.getIndex()));
-    auto c12 = JumpOperation(12, b2);
+    b6->addPredessor({b2});
 
-    b3->insert(&c8);
-    b3->insert(&c9);
-    b3->insert(&c10);
-    b3->insert(&c11);
-    b3->insert(&c12);
+    b7->addPredessor({b4});
+    b7->addSucessor({b11, b12});
 
-    ReturnOperation c14 = ReturnOperation(13, std::make_pair(b2, c6.getIndex()));
+    b8->addPredessor({b4});
 
-    b4->insert(&c14);
+    b9->addPredessor({b5});
+
+    b10->addPredessor({b5});
+    b11->addPredessor({b7});
+    b12->addPredessor({b7});
+
+
+
+    application.printDFS();
     application.print();
-    delete b1;
-    delete b2;
-    delete b3;
-    delete b4;
+    std::cout << __LINE__ << std::endl;
+    application.DFS();
+    std::cout << "After DFS" << std::endl;
+    application.printDFS();
+    application.buildDomtree();
+
 }

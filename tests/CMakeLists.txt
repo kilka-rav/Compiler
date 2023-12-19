@@ -51,6 +51,7 @@ target_link_libraries(
 target_link_libraries(
   DFS
   GTest::gtest_main
+  module
 )
 
 target_include_directories(IRModule PRIVATE ${CMAKE_SOURCE_DIR}/include/)
