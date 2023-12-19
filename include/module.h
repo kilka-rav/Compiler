@@ -87,7 +87,11 @@ public:
     void buildImmediateDominators();
     bool isDominator(int idxA, int idxB);
     void printLoops() const;
-    virtual ~Module() {}
+    virtual ~Module() {
+        for(auto&& b : basicBlocks) {
+            delete b;
+        }
+    }
     void loopAnalyzer();
     void buildDomtree();
     std::vector<LoopInfo> getLoops() const;

@@ -86,4 +86,5 @@ TEST(Dominators, DFS) {
     application.DFS();
     //std::cout << "After DFS" << std::endl;
     //application.printDFS();
+
 }

@@ -82,10 +82,6 @@ Module: Factorial(%arg0 : I32, ) -> I64 {
     ReturnOperation c14 = ReturnOperation(13, std::make_pair(b2, c6.getIndex()));
 
     b4->insert(&c14);
-    delete b1;
-    delete b2;
-    delete b3;
-    delete b4;
     //application.print();
     
 }
