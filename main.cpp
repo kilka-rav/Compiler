@@ -15,31 +15,38 @@ int main() {
     auto b = application.create<BasicBlock>();
     auto c = application.create<BasicBlock>();
     auto d = application.create<BasicBlock>();
-
     auto e = application.create<BasicBlock>();
     auto f = application.create<BasicBlock>();
-
     auto g = application.create<BasicBlock>();
+    auto h = application.create<BasicBlock>();
+    auto i = application.create<BasicBlock>();
+
     
     a->addSucessor({b});
 
-    b->addPredessor({a});
-    b->addSucessor({c, f});
+    b->addPredessor({a, f});
+    b->addSucessor({e, c});
 
-    c->addPredessor({b});
+    c->addPredessor({b, g});
     c->addSucessor({d});
 
-    d->addPredessor({c, e, g});
+    d->addPredessor({c, e});
+    d->addSucessor({g});
 
-    e->addPredessor({f});
-    e->addSucessor({d});
+    e->addPredessor({b});
+    e->addSucessor({f, d});
 
-    f->addPredessor({b});
-    f->addSucessor({e, g});
+    f->addPredessor({e});
+    f->addSucessor({b, h});
 
-    g->addPredessor({f});
-    g->addSucessor({d});
+    g->addPredessor({h, d});
+    g->addSucessor({c, i});
+
+    i->addPredessor({h, g});
+
+    h->addPredessor({e});
+    h->addSucessor({g, i});
 
     application.buildDomtree();
-
+    std::cout << application.isDominator(b->getID(), c->getID()) << std::endl;
 }
