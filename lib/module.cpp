@@ -60,9 +60,11 @@ void Module::markDFS(BasicBlock* bb, int& numDFS) {
         for(auto child : bb->getNext()) {
             markDFS(child, numDFS);
         }
-    } else if (bb->getID() != bb->getNext()[0]->getID()){
-        LoopInfo possibleLoop(bb->getID());
-        loops.push_back(possibleLoop);
+    } else if (bb->getNext().size() > 0){
+        if (bb->getID() != bb->getNext()[0]->getID()) {
+            LoopInfo possibleLoop(bb->getID());
+            loops.push_back(possibleLoop);
+        }
     }
 }
 
@@ -208,7 +210,7 @@ void Module::buildDomtree() {
     }
     std::cout << "Print: " << immediateDominators.size() <<  std::endl;
     for(int i = 0; i < immediateDominators.size(); ++i) {
-        std::cout << immediateDominators[i] << std::endl;
+        std::cout << i << " " <<  immediateDominators[i]  << std::endl;
     }
 }
 

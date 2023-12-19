@@ -8,26 +8,38 @@ int main() {
    std::string name = "CheckDominators";
 
     Module application(name);
-    std::cout << application.getName() << std::endl;
     application.setArgument("I32");
     application.setReturnType("I64");
     
-    auto b1 = application.create<BasicBlock>();
-    auto b2 = application.create<BasicBlock>();
-    auto b3 = application.create<BasicBlock>();
-    auto b4 = application.create<BasicBlock>();
+    auto a = application.create<BasicBlock>();
+    auto b = application.create<BasicBlock>();
+    auto c = application.create<BasicBlock>();
+    auto d = application.create<BasicBlock>();
 
-    auto b5 = application.create<BasicBlock>();
-    auto b6 = application.create<BasicBlock>();
+    auto e = application.create<BasicBlock>();
+    auto f = application.create<BasicBlock>();
 
-    auto b7 = application.create<BasicBlock>();
-    auto b8 = application.create<BasicBlock>();
+    auto g = application.create<BasicBlock>();
+    
+    a->addSucessor({b});
 
-    auto b9 = application.create<BasicBlock>();
-    auto b10 = application.create<BasicBlock>();
+    b->addPredessor({a});
+    b->addSucessor({c, f});
 
-    auto b11 = application.create<BasicBlock>();
-    auto b12 = application.create<BasicBlock>();
+    c->addPredessor({b});
+    c->addSucessor({d});
 
+    d->addPredessor({c, e, g});
+
+    e->addPredessor({f});
+    e->addSucessor({d});
+
+    f->addPredessor({b});
+    f->addSucessor({e, g});
+
+    g->addPredessor({f});
+    g->addSucessor({d});
+
+    application.buildDomtree();
 
 }
