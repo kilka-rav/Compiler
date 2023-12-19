@@ -5,31 +5,65 @@
 
 
 TEST(LoopAnalyzer, TEST1) {
-    /*
+
     std::string name = "First task";
     Module application(name);
     auto s = application.getName();
     application.setArgument("I32");
     application.setReturnType("I64");
     
-    auto b1 = BasicBlock(0, {0}, {1});
-    auto b2 = BasicBlock(1, {0, 4}, {2, 3});
-    auto b3 = BasicBlock(2, {1}, {2});
-    auto b4 = BasicBlock(3, {1}, {4});
-    auto b5 = BasicBlock(4, {3}, {1});
+    auto b1 = application.create<BasicBlock>();
+    auto b2 = application.create<BasicBlock>();
+    auto b3 = application.create<BasicBlock>();
+    auto b4 = application.create<BasicBlock>();
+    auto b5 = application.create<BasicBlock>();
+    
+    b1->addSucessor({b2});
 
-    application.insert(&b1);
-    application.insert(&b2);
-    application.insert(&b3);
-    application.insert(&b4);
-    application.insert(&b5);
-    
+    b2->addPredessor({b1, b5});
+    b2->addSucessor({b3, b4});
+
+    b3->addPredessor({b2});
+
+    b4->addPredessor({b2});
+    b4->addSucessor({b5});
+
+    b5->addPredessor({b4});
+    b5->addSucessor({b2});
+
     application.loopAnalyzer();
-    auto loops = application.getLoops();
-    EXPECT_EQ(1, loops[0].header);
-    auto it = loops[0].vertex.begin();
     
-    EXPECT_EQ(3, loops[0].vertex.size());
-    */
 }
 
+TEST(LoopAnalyzer, TEST2) {
+    std::string name = "First task";
+    Module application(name);
+    auto s = application.getName();
+    application.setArgument("I32");
+    application.setReturnType("I64");
+    
+    auto b1 = application.create<BasicBlock>();
+    auto b2 = application.create<BasicBlock>();
+    auto b3 = application.create<BasicBlock>();
+    auto b4 = application.create<BasicBlock>();
+    auto b5 = application.create<BasicBlock>();
+    auto b6 = application.create<BasicBlock>();
+    
+    b1->addSucessor({b2});
+
+    b2->addPredessor({b1, b5});
+    b2->addSucessor({b3});
+
+    b3->addPredessor({b2});
+    b3->addSucessor({b4, b6});
+
+    b4->addPredessor({b3});
+    b4->addSucessor({b5, b6});
+
+    b5->addPredessor({b4});
+    b5->addSucessor({b2});
+
+    b6->addPredessor({b3, b4});
+
+    application.loopAnalyzer();
+}
