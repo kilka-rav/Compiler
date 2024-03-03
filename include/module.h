@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <list>
+#include <unordered_set>
 #include <unordered_map>
 #include <set>
 #include <algorithm>
@@ -39,7 +40,7 @@ public:
     bool isMarkedCondition() const;
     int getNumDFS() const;
     void print_ids() const;
-    std::set<Operation*> liveSet;
+    std::unordered_set<Operation*> liveSet;
     std::vector<Operation*> getOps() const {
         return ops;
     }

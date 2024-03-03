@@ -58,19 +58,16 @@ int main() {
 
     application.print();
     auto liveNumbers = application.createLiveNumbers();
-    /*
+    
     for(auto l : liveNumbers) {
         std::cout << "LIVE NUMBER: " << l.second << " ";
         l.first->print();
         std::cout << std::endl;
     }
-    */
+    
 
     auto lifeIntervals = application.lifeInterval(liveNumbers);
-    for(auto lifeInterval : lifeIntervals) {
-        if (lifeInterval.first == nullptr) {
-            std::cout << "sadas" << std::endl;
-        }
+    for(auto& lifeInterval : lifeIntervals) {
         std::cout << lifeInterval.second.first << " " << lifeInterval.second.second;
         lifeInterval.first->print();
     }
