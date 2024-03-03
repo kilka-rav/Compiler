@@ -332,6 +332,158 @@ void Module::loopAnalyzer() {
     fillLoopNodes();
 }
 
+std::vector<BasicBlock*> Module::linearOrder() {
+    auto linear = basicBlocks;
+    std::sort(linear.begin(), linear.end(), [](BasicBlock* a, BasicBlock* b)
+                                  {
+                                      return a->getNumDFS() < b->getNumDFS();
+                                  });
+    return linear;
+}
+
+std::vector<BasicBlock*> Module::rpo() {
+    auto linear = basicBlocks;
+    std::sort(linear.begin(), linear.end(), [](BasicBlock* a, BasicBlock* b)
+                                  {
+                                      return a->getNumDFS() > b->getNumDFS();
+                                  });
+    return linear;
+}
+
+std::vector<std::pair<Operation*, int>> Module::createLiveNumbers() {
+    std::vector<std::pair<Operation*, int>> liveNumbers;
+    DFS();
+    int liveNumber = 2;
+    auto linear = linearOrder();
+    for(auto&& bb : linear) {
+
+        for(auto&& op : bb->getOps()) {
+            if (op->getName() != "Phi") {
+                liveNumbers.push_back(std::make_pair(op, liveNumber));
+                liveNumber = liveNumber + 2;
+            } else {
+                liveNumbers.push_back(std::make_pair(op, liveNumber - 2));
+            }
+        }
+        liveNumber = liveNumber + 2;
+    }
+    return liveNumbers;
+}
+
+int getLiveNumber(Operation* op, std::vector<std::pair<Operation*, int>>& liveNumbers) {
+    for(auto num : liveNumbers) {
+        if (num.first == op) {
+            return num.second;
+        }
+    }
+    std::cerr << "Cannot find live Number" << std::endl;
+    return -1;
+}
+
+Operation* getOpFromIndex(std::vector<BasicBlock*>& bbs, int index) {
+    for(auto&& bb : bbs) {
+        for(auto&& op : bb->getOps()) {
+            if (op->getIndex() == index) {
+                return op;
+            }
+        }
+    }
+    std::cerr << "Error " << std::endl;
+    return nullptr;
+}
+
+std::pair<int, int> Module::getIntervalNumberForBB(BasicBlock* b, std::vector<std::pair<Operation*, int>>& liveNumbers) {
+    auto firstInst = b->getOps()[0];
+    auto lastInst = b->getOps()[b->getOps().size() - 1];
+    auto firstLiveNumber = getLiveNumber(firstInst, liveNumbers);
+    auto lastLiveNumber = getLiveNumber(lastInst, liveNumbers);
+    if (firstInst->getName() != "Phi") {
+        firstLiveNumber -= 2;
+    }
+    auto interval = std::make_pair(firstLiveNumber, lastLiveNumber + 2);
+    return interval;
+}
+
+std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::vector<std::pair<Operation*, int>>& liveNumbers) {
+    auto reverse = rpo();
+    int debug = 0;
+    std::unordered_map<Operation*, std::pair<int, int>> m_intervals;
+    loopAnalyzer();
+    for(auto bb : reverse) {
+        std::cout << bb->getID() << std::endl;
+        for(auto suc : bb->getNext()) {
+            bb->liveSet.merge(suc->liveSet);
+            for(auto op : suc->getOps()) {
+                if (op->getName() == "Phi") {
+                    auto phiOp = dynamic_cast<PhiOperation*>(op);
+                    bb->liveSet.insert(phiOp->getInstrFromBB(bb));
+                }
+            }
+        }
+        //for each inst in liveset append liveRange
+        auto intervalBasicBlock = getIntervalNumberForBB(bb, liveNumbers);
+        for(auto inst : bb->liveSet) {
+            m_intervals[inst] = {std::min(intervalBasicBlock.first, m_intervals[inst].first),
+             std::max(m_intervals[inst].second, intervalBasicBlock.second)};
+        }
+        auto ops = bb->getOps();
+        std::vector<Operation*> currentPhiNodes;
+        for(auto it = ops.rbegin(); it != ops.rend(); it++) {
+            if ((*it)->getName() == "Phi") {
+                currentPhiNodes.push_back(*it);
+            }
+            m_intervals[*it].first = getLiveNumber(*it, liveNumbers);//set def
+
+            if (m_intervals[*it].second < m_intervals[*it].first + 2) {//minimal liveRange =2 
+                m_intervals[*it].second = m_intervals[*it].first + 2;
+            }
+
+            if (bb->liveSet.contains(*it)) {
+                bb->liveSet.erase(*it);
+            }
+            //iterate inputs
+            for(auto operandIndex : (*it)->getOperands()) {
+                auto input = getOpFromIndex(reverse, operandIndex);
+                m_intervals[input] = {std::min(intervalBasicBlock.first, m_intervals[input].first),
+                    std::max(m_intervals[input].second, getLiveNumber(*it, liveNumbers))    
+                };
+                bb->liveSet.emplace(input);
+            }
+        }
+        //remove phi in current block from liveset
+        for(auto phi : currentPhiNodes) {
+            if (bb->liveSet.contains(phi)) {
+                bb->liveSet.erase(phi);
+            }
+            m_intervals[phi].first = getLiveNumber(phi, liveNumbers);
+        }
+        //handle loopHeader
+        for(auto loop : loops) {
+            if (loop.header == bb->getID()) {
+                int loopEnd = -1;
+                for(auto blockID : loop.vertex) {
+                    loopEnd = std::max(loopEnd, getIntervalNumberForBB(basicBlocks[blockID], liveNumbers).second);
+                }
+                for(auto op : bb->liveSet) {
+                    m_intervals[op] = {
+                        std::min(intervalBasicBlock.first, m_intervals[op].first),
+                        std::max(loopEnd, m_intervals[op].second)
+                    };
+                }
+
+            }
+        }
+        
+        //if (debug == 1) {
+        //    return m_intervals;
+        //}
+        debug++;
+        
+    }
+    
+    return m_intervals;
+}
+
 std::vector<LoopInfo> Module::getLoops() const {
     return loops;
 }
