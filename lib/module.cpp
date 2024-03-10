@@ -408,14 +408,18 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
     auto reverse = rpo();
     std::unordered_map<Operation*, std::pair<int, int>> m_intervals;
     loopAnalyzer();
+    for(auto b : reverse) {
+        std::cout << b->getID() << " ";
+    }
+    std::cout << std::endl;
     for(auto bb : reverse) {
         std::unordered_set<Operation*> live;
         for(auto suc : bb->getNext()) {
-            bb->liveSet.merge(suc->liveSet);
+            std::copy(suc->liveSet.begin(), suc->liveSet.end(), std::inserter(live, live.end()));
             for(auto op : suc->getOps()) {
                 if (op->getName() == "Phi") {
                     auto phiOp = dynamic_cast<PhiOperation*>(op);
-                    bb->liveSet.insert(phiOp->getInstrFromBB(bb));
+                    live.insert(phiOp->getInstrFromBB(bb));
                 }
             }
         }
@@ -430,7 +434,11 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
         for(auto it = ops.rbegin(); it != ops.rend(); it++) {
             if ((*it)->getName() == "Phi") {
                 currentPhiNodes.push_back(*it);
-            } 
+                continue;
+            }
+            std::cout << "DEF START" << std::endl;
+            (*it)->print();
+            std::cout << "DEF FINISH" << std::endl; 
             m_intervals[*it].first = getLiveNumber(*it, liveNumbers);//set def
 
             if (m_intervals[*it].second < m_intervals[*it].first + 2) {//minimal liveRange =2 
@@ -440,9 +448,14 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
             if (live.contains(*it)) {
                 live.erase(*it);
             }
-            //iterate inputs
+
             for(auto operandIndex : (*it)->getOperands()) {
                 auto input = getOpFromIndex(basicBlocks, operandIndex);
+                /*
+                std::cout << __LINE__ << std::endl;
+                input->print();
+                std::cout << __LINE__ << std::endl;
+                */
                 m_intervals[input] = {std::min(intervalBasicBlock.first, m_intervals[input].first),
                     std::max(m_intervals[input].second, getLiveNumber(*it, liveNumbers))    
                 };
@@ -451,6 +464,17 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
         }
         //remove phi in current block from liveset
         for(auto phi : currentPhiNodes) {
+            //iterate inputs of phi-nodes
+            /*
+            for(auto operandIndex : phi->getOperands()) {
+                auto input = getOpFromIndex(basicBlocks, operandIndex);
+                m_intervals[input] = {std::min(intervalBasicBlock.first, m_intervals[input].first),
+                    std::max(m_intervals[input].second, getLiveNumber(phi, liveNumbers))    
+                };
+                live.emplace(input);
+            }
+            */
+
             if (live.contains(phi)) {
                 live.erase(phi);
             }
@@ -465,14 +489,18 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
                 }
                 for(auto op : live) {
                     m_intervals[op] = {
-                        std::min(intervalBasicBlock.first, m_intervals[op].first),
+                        m_intervals[op].first,
                         std::max(loopEnd, m_intervals[op].second)
                     };
                 }
 
             }
         }
-        
+        std::cout << "Start: " << std::endl;
+        for(auto l : live) {
+            l->print();
+        }
+        std::cout << "FINISH" << std::endl;
         bb->liveSet = live;
     }
     

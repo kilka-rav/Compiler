@@ -185,7 +185,13 @@ public:
         assert(inputBB.size() == ops.size());
         for(int i = 0; i < inputBB.size(); ++i) {
             if (bb == inputBB[i]) {
-                return bb->getOps()[ops[i]];
+                int indexOp = ops[i];
+                auto &&ops_tmp = bb->getOps();
+                for(auto possibleOp : ops_tmp) {
+                    if (possibleOp->getIndex() == indexOp) {
+                        return possibleOp;
+                    }
+                }
             }
         }
         return nullptr;
