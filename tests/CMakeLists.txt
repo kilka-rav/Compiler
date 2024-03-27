@@ -15,6 +15,12 @@ add_executable(
 )
 
 add_executable(
+  liveness
+  liveness.cpp
+  ../lib/module.cpp
+)
+
+add_executable(
   IRModule
   IRModule.cpp
   ../lib/module.cpp/
@@ -44,6 +50,11 @@ target_link_libraries(
 )
 
 target_link_libraries(
+  liveness
+  GTest::gtest_main
+)
+
+target_link_libraries(
   dominators
   GTest::gtest_main
 )
@@ -58,6 +69,7 @@ target_include_directories(IRModule PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_include_directories(DFS PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_include_directories(dominators PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_include_directories(loopAnalyzer PRIVATE ${CMAKE_SOURCE_DIR}/include/)
+target_include_directories(liveness PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 
 target_link_libraries(
   dummy_test
