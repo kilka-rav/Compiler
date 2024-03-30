@@ -438,15 +438,13 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
                 currentPhiNodes.push_back(*it);
                 continue;
             }
-            /*
-            std::cout << "DEF START" << std::endl;
-            (*it)->print();
-            std::cout << "DEF FINISH" << std::endl; 
-            */
-            m_intervals[*it].first = getLiveNumber(*it, liveNumbers);//set def
 
-            if (m_intervals[*it].second < m_intervals[*it].first + 2) {//minimal liveRange =2 
-                m_intervals[*it].second = m_intervals[*it].first + 2;
+            if ((*it)->getName() != "Return" && (*it)->getName() != "If") {    
+                m_intervals[*it].first = getLiveNumber(*it, liveNumbers);//set def
+    
+                if (m_intervals[*it].second < m_intervals[*it].first + 2) {//minimal liveRange =2 
+                    m_intervals[*it].second = m_intervals[*it].first + 2;
+                }
             }
 
             if (live.contains(*it)) {
@@ -455,6 +453,9 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
 
             for(auto operandIndex : (*it)->getOperands()) {
                 auto input = getOpFromIndex(basicBlocks, operandIndex);
+                if (input->getName() == "Return" || input->getName() == "If") {
+                    continue;
+                }
                 m_intervals[input] = {std::min(intervalBasicBlock.first, m_intervals[input].first),
                     std::max(m_intervals[input].second, getLiveNumber(*it, liveNumbers))    
                 };
@@ -487,6 +488,9 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
                     loopEnd = std::max(loopEnd, getIntervalNumberForBB(basicBlocks[blockID], liveNumbers).second);
                 }
                 for(auto op : live) {
+                    if (op->getName() == "Return" || op->getName() == "If") {
+                        continue;
+                    }
                     m_intervals[op] = {
                         m_intervals[op].first,
                         std::max(loopEnd, m_intervals[op].second)

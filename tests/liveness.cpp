@@ -175,10 +175,8 @@ TEST(TestLiveness, test2) {
     m_intervals[&phi1] = {8, 22};
     m_intervals[&phi2] = {8, 18};
     m_intervals[&equal1] = {10, 12};
-    m_intervals[&if1] = {12, 14};
     m_intervals[&mul1] = {16, 20};
     m_intervals[&sub1] = {18, 20};
     m_intervals[&add1] = {22, 24};
-    m_intervals[&ret1] = {24, 26};
     EXPECT_TRUE(test.checkLiveIntervals(m_intervals));
 }
