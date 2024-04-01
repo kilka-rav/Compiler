@@ -57,18 +57,7 @@ int main() {
     b3->insert(&ret1);
 
     application.print();
-    auto liveNumbers = application.createLiveNumbers();
     
-    for(auto l : liveNumbers) {
-        std::cout << "LIVE NUMBER: " << l.second << " ";
-        l.first->print();
-        std::cout << std::endl;
-    }
-    
-
-    auto lifeIntervals = application.lifeInterval(liveNumbers);
-    for(auto& lifeInterval : lifeIntervals) {
-        std::cout << lifeInterval.second.first << " " << lifeInterval.second.second;
-        lifeInterval.first->print();
-    }
+    auto regAllocs = application.linearScanRegAlloc(3);
+    regAllocs.print();
 }

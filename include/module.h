@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <set>
 #include <algorithm>
+#include <stack>
 
 class Operation;
 
@@ -58,6 +59,16 @@ public:
     LoopInfo(int _possibleHeader) : possibleHeader(_possibleHeader) {}
 };
 
+struct AllocInfo {
+    int stackShift;
+    std::vector<std::pair<Operation*, int>> regs;
+    void print() const;
+    void insert(Operation* op, int reg);
+    int getReg(Operation* op) const;
+    void moveToStack(Operation* op);
+    AllocInfo() : stackShift(-1) {};
+};
+
 //template <typename ConstantType>
 class Module {
 private:
@@ -82,6 +93,8 @@ private:
     void findLatches();
     int getImmediateDominator(BasicBlock* bb);
     bool checkConditions(int possibleHeader);
+    void expireOldIntervals(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, std::stack<int>& freeReg, int idx, AllocInfo& info);
+    void spillAtInterval(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, int idx, AllocInfo& info);
     std::vector<BasicBlock*> linearOrder();
     std::vector<BasicBlock*> rpo();
 public:
@@ -110,6 +123,7 @@ public:
     std::pair<int, int> getIntervalNumberForBB(BasicBlock* b, std::vector<std::pair<Operation*, int>>& liveNumbers);
     std::unordered_map<Operation*, std::pair<int, int>> lifeInterval(std::vector<std::pair<Operation*, int>>& linear);
     std::vector<LoopInfo> getLoops() const;
+    AllocInfo linearScanRegAlloc(int numRegisters);
     template <typename Type, typename ...Args>
     Type* create(Args... args) {
         std::cout << "Cannot find constructor" << std::endl;

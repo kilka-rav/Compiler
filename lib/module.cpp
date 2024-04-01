@@ -499,13 +499,6 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
 
             }
         }
-        /*
-        std::cout << "Start: " << std::endl;
-        for(auto l : live) {
-            l->print();
-        }
-        std::cout << "FINISH" << std::endl;
-        */
         bb->liveSet = live;
     }
     
@@ -522,4 +515,117 @@ int Operation::getIndex() const {
 
 std::string Operation::getName() const {
     return name;
+}
+
+int AllocInfo::getReg(Operation* op) const {
+    for(auto info : regs) {
+        if (info.first == op) {
+            return info.second;
+        }
+    }
+    return -10000;
+}
+
+void AllocInfo::moveToStack(Operation* op) {
+    for(auto reg : regs) {
+        if (reg.first == op) {
+            stackShift--;
+            reg.second = stackShift;
+        }
+    }
+}
+
+void AllocInfo::insert(Operation* op, int reg) {
+    regs.push_back(std::make_pair(op, reg));
+}
+
+void Module::expireOldIntervals(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, std::stack<int>& freeReg, int idx, AllocInfo& info) {
+    int it = 0;
+    for(auto act : active) {
+        if (act.second.second <= idx) {
+            auto reg = info.getReg(op);
+            if (reg >= 0) {
+                freeReg.push(reg);
+            } else {
+                info.stackShift = info.stackShift + 1;
+            }
+            active.erase(active.begin() + it);
+        }
+        it++;
+    }
+}
+
+void Module::spillAtInterval(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, int idx, AllocInfo& info) {
+    for(auto act : active) {
+        if (act.second.second > idx) {
+            auto reg = info.getReg(act.first);
+            info.insert(op, reg);
+            info.moveToStack(act.first);
+        }
+    }
+}
+
+void AllocInfo::print() const {
+    for(auto reg : regs) {
+        std::cout << "r" << reg.second;
+        reg.first->print();
+        
+    }
+}
+
+AllocInfo Module::linearScanRegAlloc(int numRegisters) {
+    if (numRegisters <= 0) {
+        std::cerr << "Incorrect number of registers" << std::endl;
+        abort();
+    }
+    AllocInfo info = AllocInfo();
+    
+    //prepare structures
+    auto liveNumbers = createLiveNumbers();
+    auto lifeIntervals = lifeInterval(liveNumbers);
+    std::stack<int> freeRegisters;
+    std::vector<std::pair<Operation*, std::pair<int, int>>> newLiveIntervals(lifeIntervals.begin(), lifeIntervals.end());
+    std::vector<std::pair<Operation*, std::pair<int, int>>> active;
+
+    std::sort(newLiveIntervals.begin(), newLiveIntervals.end(), [](std::pair<Operation*, std::pair<int, int>>& a, std::pair<Operation*, std::pair<int, int>>& b) {
+        if (a.second.first == b.second.first) {
+            return a.first->getIndex() < b.first->getIndex();
+        }
+        return a.second.first < b.second.first;
+    });
+
+    for(auto p : newLiveIntervals) {
+        std::cout << p.second.first << " " << p.second.second;
+        p.first->print();
+    }
+
+    for(int i = numRegisters - 1; i >= 0; i--) {
+        freeRegisters.push(i);
+    }
+
+    int currentIndex;
+    for(auto inst : newLiveIntervals) {
+        currentIndex = inst.second.first;
+        auto op = inst.first;
+        expireOldIntervals(op, active, freeRegisters, currentIndex, info);
+        if (active.size() >= numRegisters) {
+            spillAtInterval(op, active, inst.second.second, info);
+        } else {
+            int reg;
+            if (!freeRegisters.empty()) {
+                reg = freeRegisters.top();
+                freeRegisters.pop();
+            } else {
+                reg = info.stackShift;
+                std::cout << "Stack val: " << reg << std::endl;
+                info.stackShift--;
+            }
+
+            active.push_back(inst);
+            info.insert(op, reg);
+
+        }
+    }
+
+    return info;
 }
