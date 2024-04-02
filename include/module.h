@@ -94,7 +94,7 @@ private:
     int getImmediateDominator(BasicBlock* bb);
     bool checkConditions(int possibleHeader);
     void expireOldIntervals(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, std::stack<int>& freeReg, int idx, AllocInfo& info);
-    void spillAtInterval(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, int idx, AllocInfo& info);
+    void spillAtInterval(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, int idx, int idx2, AllocInfo& info);
     std::vector<BasicBlock*> linearOrder();
     std::vector<BasicBlock*> rpo();
 public:

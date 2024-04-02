@@ -527,10 +527,10 @@ int AllocInfo::getReg(Operation* op) const {
 }
 
 void AllocInfo::moveToStack(Operation* op) {
-    for(auto reg : regs) {
+    for(auto& reg : regs) {
         if (reg.first == op) {
-            stackShift--;
             reg.second = stackShift;
+            stackShift--;
         }
     }
 }
@@ -543,7 +543,7 @@ void Module::expireOldIntervals(Operation* op, std::vector<std::pair<Operation*,
     int it = 0;
     for(auto act : active) {
         if (act.second.second <= idx) {
-            auto reg = info.getReg(op);
+            auto reg = info.getReg(act.first);
             if (reg >= 0) {
                 freeReg.push(reg);
             } else {
@@ -555,20 +555,37 @@ void Module::expireOldIntervals(Operation* op, std::vector<std::pair<Operation*,
     }
 }
 
-void Module::spillAtInterval(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, int idx, AllocInfo& info) {
+void Module::spillAtInterval(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, int startIdx, int finishIdx, AllocInfo& info) {
+    auto maxAct = active[0];
+    int it = 0;
+    int index = 0;
     for(auto act : active) {
-        if (act.second.second > idx) {
-            auto reg = info.getReg(act.first);
-            info.insert(op, reg);
-            info.moveToStack(act.first);
+        if (maxAct.second.second <= act.second.second) {
+            maxAct = act;
+            it = index;
         }
+        index++;
+    }
+    
+    if (maxAct.second.second > finishIdx) {
+        auto reg = info.getReg(maxAct.first);
+        info.insert(op, reg);
+        info.moveToStack(maxAct.first);
+        active.erase(active.begin() + it);
+        active.push_back(std::make_pair(op, std::make_pair(startIdx, finishIdx)));
+
     }
 }
 
 void AllocInfo::print() const {
     for(auto reg : regs) {
-        std::cout << "r" << reg.second;
-        reg.first->print();
+        if (reg.second >= 0) {
+            std::cout << "r" << reg.second;
+            reg.first->print();
+        } else {
+            std::cout << "s" << -1 * reg.second - 1;
+            reg.first->print();
+        }
         
     }
 }
@@ -594,11 +611,6 @@ AllocInfo Module::linearScanRegAlloc(int numRegisters) {
         return a.second.first < b.second.first;
     });
 
-    for(auto p : newLiveIntervals) {
-        std::cout << p.second.first << " " << p.second.second;
-        p.first->print();
-    }
-
     for(int i = numRegisters - 1; i >= 0; i--) {
         freeRegisters.push(i);
     }
@@ -608,20 +620,19 @@ AllocInfo Module::linearScanRegAlloc(int numRegisters) {
         currentIndex = inst.second.first;
         auto op = inst.first;
         expireOldIntervals(op, active, freeRegisters, currentIndex, info);
-        if (active.size() >= numRegisters) {
-            spillAtInterval(op, active, inst.second.second, info);
+        if (active.size() == numRegisters) {
+            spillAtInterval(op, active, inst.second.first, inst.second.second, info);
         } else {
             int reg;
             if (!freeRegisters.empty()) {
                 reg = freeRegisters.top();
                 freeRegisters.pop();
+                active.push_back(inst);
             } else {
                 reg = info.stackShift;
-                std::cout << "Stack val: " << reg << std::endl;
-                info.stackShift--;
+                info.stackShift = info.stackShift - 1;
             }
 
-            active.push_back(inst);
             info.insert(op, reg);
 
         }
