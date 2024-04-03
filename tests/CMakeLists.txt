@@ -33,6 +33,12 @@ add_executable(
 )
 
 add_executable(
+  regAlloc
+  regAlloc.cpp
+  ../lib/module.cpp
+)
+
+add_executable(
   DFS
   DFS.cpp
   ../lib/module.cpp
@@ -65,11 +71,18 @@ target_link_libraries(
   module
 )
 
+target_link_libraries(
+  regAlloc
+  GTest::gtest_main
+  module
+)
+
 target_include_directories(IRModule PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_include_directories(DFS PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_include_directories(dominators PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_include_directories(loopAnalyzer PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_include_directories(liveness PRIVATE ${CMAKE_SOURCE_DIR}/include/)
+target_include_directories(regAlloc PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 
 target_link_libraries(
   dummy_test
