@@ -12,11 +12,14 @@ set(IR_EXEC ir)
 
 add_executable(${IR_EXEC} main.cpp
                           lib/module.cpp
-                    
                           )
 target_include_directories(${IR_EXEC} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
+add_library(optimization lib/optimization.cpp
+                         include/optimization.h
+)
 
+target_link_libraries(${IR_EXEC} optimization)
 
 include(FetchContent)
 FetchContent_Declare(

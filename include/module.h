@@ -41,10 +41,13 @@ public:
     bool isMarkedCondition() const;
     int getNumDFS() const;
     void print_ids() const;
+    bool replace(Operation* dst, Operation* src);
+    void deleteOp(int idx);
     std::unordered_set<Operation*> liveSet;
     std::vector<Operation*> getOps() const {
         return ops;
     }
+    void setOps(std::vector<Operation*> newOps) { ops = newOps; }
     int number_dfs_condition = -1;
 };
 
@@ -100,6 +103,8 @@ private:
 public:
     Module(std::string& _name) : name(_name) {}
     std::string& getName() const;
+    void replace(Operation* dest, Operation* src);
+    Operation* getOperation(int bb, int index) const;
     void setReturnType(const std::string& _returnType);
     void setName(const std::string& _name);
     void setArgument(const std::string& inputType);
@@ -112,6 +117,9 @@ public:
     void buildImmediateDominators();
     bool isDominator(int idxA, int idxB);
     void printLoops() const;
+    bool haveUsers(int idx) const;
+    void deleteOp(Operation* op);
+    std::vector<BasicBlock*> getBBs() const { return basicBlocks; }
     virtual ~Module() {
         for(auto&& b : basicBlocks) {
             delete b;
@@ -158,6 +166,8 @@ public:
     Operation(std::string _name, int _idx, std::initializer_list<int> indexOfOperands) : name(_name), idx(_idx), operands(indexOfOperands) {}
     std::vector<int> getOperands() const { return operands; }
     std::string getName() const;
+    void setIndex(int newIndex);
+    bool hasMemoryEffect() const;
 };
 
 class ConstantOperation : public Operation {
@@ -170,7 +180,9 @@ public:
     ConstantOperation() = default;
     void print() const {
         std::cout << "\t  %" <<  getIndex() << "." << DType << " Constant " << value << std::endl;
-    }    
+    }
+    uint64_t getValue() const { return value; }
+    std::string getDType() const { return DType; }
 };
 
 class JumpOperation : public Operation {
@@ -245,6 +257,8 @@ public:
         std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : [" << left.first->getID() << " : %" << left.second << "], [" 
             << right.first->getID() << " : %" << right.second << "]" << std::endl;
     }
+    std::pair<int, int> getA() const { return std::make_pair(left.first->getID(), left.second); }
+    std::pair<int, int> getB() const { return std::make_pair(right.first->getID(), right.second); }
 };
 
 class CastOperation : public Operation {
@@ -261,7 +275,7 @@ class ReturnOperation : public Operation {
     std::pair<BasicBlock*, int> prev;
     bool use_void = false;
 public:
-    ReturnOperation(int idx, std::pair<BasicBlock*, int> p) : prev(p), Operation("Return", idx, {prev.second}) {}
+    ReturnOperation(int idx, std::pair<BasicBlock*, int> p) : prev(p), Operation("Return", idx, {p.second}) {}
     ReturnOperation(int idx) : use_void(true), Operation("Return", idx) {}
     void print() const {
         if (!use_void) {

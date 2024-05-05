@@ -139,6 +139,20 @@ void BasicBlock::print_ids() const {
         std::cout << id->getID() << " ";
 }
 
+bool BasicBlock::replace(Operation* src, Operation* dst) {
+    int index = 0;
+    for(auto& op : getOps()) {
+        if (op == src) {
+            dst->setIndex(src->getIndex());
+            ops[index] = dst;
+            print();
+            return true;
+        }
+        index++;
+    }
+    return false;
+}
+
 std::vector<BasicBlock*> BasicBlock::getPrev() const {
     return prev_id;
 }
@@ -257,6 +271,15 @@ void Module::findLatches() {
             if (curDFS < basicBlocks[prev->getID()]->getNumDFS()) {
                 loop.latches.push_back(prev->getID());
             }
+        }
+    }
+}
+
+void Module::replace(Operation* dest, Operation* src) {
+    auto&& tmp_bbs = getBBs();
+    for(auto& bb : tmp_bbs) {
+        if (bb->replace(dest, src)) {
+            return;
         }
     }
 }
@@ -505,12 +528,40 @@ std::unordered_map<Operation*, std::pair<int, int>> Module::lifeInterval(std::ve
     return m_intervals;
 }
 
+Operation* Module::getOperation(int bb, int index) const {
+    return basicBlocks[bb]->getOps()[index];
+}
+
+bool Module::haveUsers(int idx) const {
+    for(auto& bb : basicBlocks) {
+        for(auto& op : bb->getOps()) {
+            for(auto operand : op->getOperands()) {
+                if (operand == idx) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 std::vector<LoopInfo> Module::getLoops() const {
     return loops;
 }
 
 int Operation::getIndex() const {
     return idx;
+}
+
+void Operation::setIndex(int newIdx) {
+    idx = newIdx;
+}
+
+bool Operation::hasMemoryEffect() const {
+    if (name == "Return" || name == "Move") {
+        return true;
+    }
+    return false;
 }
 
 std::string Operation::getName() const {
@@ -537,6 +588,22 @@ void AllocInfo::moveToStack(Operation* op) {
 
 void AllocInfo::insert(Operation* op, int reg) {
     regs.push_back(std::make_pair(op, reg));
+}
+
+void BasicBlock::deleteOp(int idx) {
+    ops.erase(ops.begin() + idx);
+}
+
+void Module::deleteOp(Operation* unusedOp) {
+    for(auto& bb : basicBlocks) {
+        int idx = 0;
+        for(auto& op : bb->getOps()) {
+            if (op == unusedOp) {
+                bb->deleteOp(idx);
+            }
+            idx++;
+        }
+    }
 }
 
 void Module::expireOldIntervals(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, std::stack<int>& freeReg, int idx, AllocInfo& info) {
