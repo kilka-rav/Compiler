@@ -90,6 +90,40 @@ struct MulConstantPattern final : public PatternBase {
         }
 };
 
+struct ShiftConstantPattern final : public PatternBase {
+    ShiftConstantPattern() : PatternBase("Shift") {}
+    bool matchAndRewrite(Operation *op, Module* ir) override {
+            if (op->getName() == "Shift") {
+                ShiftOperation* shiftOperation = dynamic_cast<ShiftOperation*>(op);
+                //analyze
+                if (shiftOperation->getDirection() != "Left" && shiftOperation->getDirection() != "Right") {
+                    return false; //don't support these directions
+                }
+                auto a = shiftOperation->getA();
+                auto b = shiftOperation->getB();
+                Operation* op1 = ir->getOperation(a.first, a.second);
+                Operation* op2 = ir->getOperation(b.first, b.second);
+                if (op1->getName() == "Constant" || op2->getName() == "Constant") {
+                    ConstantOperation* const1 = dynamic_cast<ConstantOperation*>(op1);
+                    ConstantOperation* const2 = dynamic_cast<ConstantOperation*>(op2);
+                    if (const1->getDType() != "I32" && const2->getDType() != "I32") {
+                        return false;//don't support different types
+                    }
+                    ConstantOperation* constResult;
+                    if (shiftOperation->getDirection() == "Left") {
+                        constResult = ir->create<ConstantOperation>(const1->getValue() << const2->getValue(), const1->getDType());
+                    } else {
+                        constResult = ir->create<ConstantOperation>(const1->getValue() >> const2->getValue(), const1->getDType());
+                    }
+                    ir->replace(op, constResult);
+                    return true;
+                }
+                
+            }
+            return false;
+        }
+};
+
 class ConstantFoldingOptimization final : public OptimizationBase {
 public:
     ConstantFoldingOptimization(Module* _ir) : OptimizationBase(_ir) {
@@ -99,9 +133,11 @@ public:
         DCEPattern pattern;
         AddConstant pattern1;
         MulConstantPattern pattern2;
+        ShiftConstantPattern pattern3;
         addPattern(&pattern);
         addPattern(&pattern1);
         addPattern(&pattern2);
+        addPattern(&pattern3);
 
         bool irWasChanged = true;
         while(irWasChanged) {

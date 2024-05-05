@@ -302,3 +302,18 @@ public:
         std::cout << "\t  %" << getIndex() << " " <<  getName() << " %" << prev << std::endl;
     }
 };
+
+class ShiftOperation : public Operation {
+    std::string direction;
+    std::pair<BasicBlock*, int> left;
+    std::pair<BasicBlock*, int> right;
+public:
+    ShiftOperation(int idx, std::string _direction, std::pair<BasicBlock*, int> _left, std::pair<BasicBlock*, int> _right) : direction(_direction), left(_left), right(_right), Operation("Shift", idx, {_left.second, _right.second}) {}
+    void print() const {
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << direction << " : [" << left.first->getID() << " : %" << left.second << "], [" 
+            << right.first->getID() << " : %" << right.second << "]" << std::endl;
+    }
+    std::string getDirection() const { return direction; }
+    std::pair<int, int> getA() const { return std::make_pair(left.first->getID(), left.second); }
+    std::pair<int, int> getB() const { return std::make_pair(right.first->getID(), right.second); }
+};

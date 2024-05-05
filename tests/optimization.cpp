@@ -54,3 +54,60 @@ TEST(MulFoldingDCE, test2) {
     EXPECT_EQ(const5->getValue(), 14);
     EXPECT_EQ(const5->getDType(), "I32");
 }
+
+TEST(ShiftLeftFoldingDCE, test3) {
+        std::string name = "Constant folding";
+    Module application(name);
+    auto s = application.getName();
+    application.setArgument("I32");
+    application.setReturnType("I32");
+    std::string dtype = "I32";
+    auto b0 = application.create<BasicBlock>();
+    auto const1 = application.create<ConstantOperation>(0, 1, "I32");
+    auto const2 = application.create<ConstantOperation>(1, 10, "I32");
+    auto shift = application.create<ShiftOperation>(2, "Left", std::make_pair(b0, const1->getIndex()), std::make_pair(b0, const2->getIndex()));
+    auto ret = application.create<ReturnOperation>(3, std::make_pair(b0, shift->getIndex()));
+
+    b0->insert(const1);
+    b0->insert(const2);
+    b0->insert(shift);
+    b0->insert(ret);
+    application.print();
+    ConstantFoldingOptimization opt1(&application);
+    opt1.run();
+    application.print();
+    auto opResult = application.getBBs()[0]->getOps()[0];
+    auto const5 = dynamic_cast<ConstantOperation*>(opResult);
+    EXPECT_NE(const5, nullptr);
+    EXPECT_EQ(const5->getValue(), 1024);
+    EXPECT_EQ(const5->getDType(), "I32");
+}
+
+TEST(ShiftRightFoldingDCE, test3) {
+        std::string name = "Constant folding";
+    Module application(name);
+    auto s = application.getName();
+    application.setArgument("I32");
+    application.setReturnType("I32");
+    std::string dtype = "I32";
+    auto b0 = application.create<BasicBlock>();
+    auto const1 = application.create<ConstantOperation>(0, 1024, "I32");
+    auto const2 = application.create<ConstantOperation>(1, 10, "I32");
+    auto shift = application.create<ShiftOperation>(2, "Right", std::make_pair(b0, const1->getIndex()), std::make_pair(b0, const2->getIndex()));
+    auto ret = application.create<ReturnOperation>(3, std::make_pair(b0, shift->getIndex()));
+
+    b0->insert(const1);
+    b0->insert(const2);
+    b0->insert(shift);
+    b0->insert(ret);
+    application.print();
+    ConstantFoldingOptimization opt1(&application);
+    opt1.run();
+    application.print();
+    auto opResult = application.getBBs()[0]->getOps()[0];
+    auto const5 = dynamic_cast<ConstantOperation*>(opResult);
+    EXPECT_NE(const5, nullptr);
+    EXPECT_EQ(const5->getValue(), 1);
+    EXPECT_EQ(const5->getDType(), "I32");
+}
+
