@@ -139,13 +139,13 @@ void BasicBlock::print_ids() const {
         std::cout << id->getID() << " ";
 }
 
-bool BasicBlock::replace(Operation* src, Operation* dst) {
+bool BasicBlock::replace(Operation* dest, Operation* src) {
     int index = 0;
     for(auto& op : getOps()) {
-        if (op == src) {
-            dst->setIndex(src->getIndex());
-            ops[index] = dst;
-            print();
+        if (op == dest) {
+            src->setIndex(dest->getIndex());
+            ops[index] = src;
+            delete dest;
             return true;
         }
         index++;
@@ -191,6 +191,12 @@ BasicBlock::BasicBlock(int _id, std::initializer_list<BasicBlock*> _prev, std::i
     id = _id;
     prev_id = _prev;
     next_id = _next;
+}
+
+BasicBlock::~BasicBlock() {
+    for(auto&& op : ops) {
+        delete op;
+    }
 }
 
 void Module::DFSCondition(int indexOfDominator) {

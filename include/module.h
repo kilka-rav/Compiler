@@ -47,8 +47,8 @@ public:
     std::vector<Operation*> getOps() const {
         return ops;
     }
-    void setOps(std::vector<Operation*> newOps) { ops = newOps; }
     int number_dfs_condition = -1;
+    virtual ~BasicBlock();
 };
 
 struct LoopInfo {
@@ -122,6 +122,11 @@ public:
     std::vector<BasicBlock*> getBBs() const { return basicBlocks; }
     virtual ~Module() {
         for(auto&& b : basicBlocks) {
+            /*
+            for(auto&& op : b->getOps()) {
+                delete op;
+            }
+            */
             delete b;
         }
     }
@@ -134,8 +139,8 @@ public:
     AllocInfo linearScanRegAlloc(int numRegisters);
     template <typename Type, typename ...Args>
     Type* create(Args... args) {
-        std::cout << "Cannot find constructor" << std::endl;
-        return nullptr;
+        Type* op = new Type(args...);
+        return op;
     }
 };
 
@@ -168,6 +173,7 @@ public:
     std::string getName() const;
     void setIndex(int newIndex);
     bool hasMemoryEffect() const;
+    virtual ~Operation() {}
 };
 
 class ConstantOperation : public Operation {
@@ -183,6 +189,7 @@ public:
     }
     uint64_t getValue() const { return value; }
     std::string getDType() const { return DType; }
+    virtual ~ConstantOperation() {}
 };
 
 class JumpOperation : public Operation {
@@ -200,6 +207,11 @@ private:
     std::vector<int> ops;
 public:
     PhiOperation(int idx, std::initializer_list<BasicBlock*> _inputs, std::initializer_list<int> _ops) : inputBB(_inputs), ops(_ops), Operation("Phi", idx, _ops) {}
+    PhiOperation(int idx) : Operation("Phi", idx) {}
+    void addInputs(std::initializer_list<BasicBlock*> _inputs, std::initializer_list<int> _ops) {
+        inputBB = _inputs;
+        ops = _ops;
+    }
     void print() const {
         std::cout << "\t  %" << getIndex() << " " <<  getName() << " ";
         for(size_t i = 0; i < inputBB.size(); ++i) {
