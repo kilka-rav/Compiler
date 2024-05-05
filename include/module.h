@@ -122,11 +122,6 @@ public:
     std::vector<BasicBlock*> getBBs() const { return basicBlocks; }
     virtual ~Module() {
         for(auto&& b : basicBlocks) {
-            /*
-            for(auto&& op : b->getOps()) {
-                delete op;
-            }
-            */
             delete b;
         }
     }
