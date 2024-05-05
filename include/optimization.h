@@ -37,10 +37,10 @@ class DCEPattern final : public PatternBase {
         }
 };
 
-class addConstant final : public PatternBase {
+class AddConstant final : public PatternBase {
     public:
-        addConstant() : PatternBase("Add") {}
-        bool matchAndRewrite(Operation *op, Module* ir) {
+        AddConstant() : PatternBase("Add") {}
+        bool matchAndRewrite(Operation *op, Module* ir) override {
             if (op->getName() == "Add") {
                 BinaryOperation* addOperation = dynamic_cast<BinaryOperation*>(op);
                 //analyze
@@ -64,6 +64,32 @@ class addConstant final : public PatternBase {
         }
 };
 
+struct MulConstantPattern final : public PatternBase {
+    MulConstantPattern() : PatternBase("Mul") {}
+    bool matchAndRewrite(Operation *op, Module* ir) override {
+            if (op->getName() == "Mul") {
+                BinaryOperation* mulOperation = dynamic_cast<BinaryOperation*>(op);
+                //analyze
+                auto a = mulOperation->getA();
+                auto b = mulOperation->getB();
+                Operation* op1 = ir->getOperation(a.first, a.second);
+                Operation* op2 = ir->getOperation(b.first, b.second);
+                if (op1->getName() == "Constant" || op2->getName() == "Constant") {
+                    ConstantOperation* const1 = dynamic_cast<ConstantOperation*>(op1);
+                    ConstantOperation* const2 = dynamic_cast<ConstantOperation*>(op2);
+                    if (const1->getDType() != const2->getDType()) {
+                        return false;//don't support different types
+                    }
+                    auto constResult = ir->create<ConstantOperation>(const1->getValue() * const2->getValue(), const1->getDType());
+                    ir->replace(op, constResult);
+                    return true;
+                }
+                
+            }
+            return false;
+        }
+};
+
 class ConstantFoldingOptimization final : public OptimizationBase {
 public:
     ConstantFoldingOptimization(Module* _ir) : OptimizationBase(_ir) {
@@ -71,9 +97,11 @@ public:
     }
     void run() override {
         DCEPattern pattern;
-        addConstant pattern1;
+        AddConstant pattern1;
+        MulConstantPattern pattern2;
         addPattern(&pattern);
         addPattern(&pattern1);
+        addPattern(&pattern2);
 
         bool irWasChanged = true;
         while(irWasChanged) {

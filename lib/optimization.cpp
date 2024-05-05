@@ -6,8 +6,10 @@ void OptimizationBase::addPattern(PatternBase* pattern) {
 
 bool OptimizationBase::applyPatterns(Operation* op, Module* ir) {
     bool irWasChanged = false;
-    std::pair<bool, Module*> res;
     for(auto pattern : patterns) {
+        if (irWasChanged) {
+            return true;
+        }
         irWasChanged |= pattern->matchAndRewrite(op, ir);
     }
     return irWasChanged;

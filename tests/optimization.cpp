@@ -1,9 +1,9 @@
-#include <iostream>
+#include <gtest/gtest.h>
 #include "module.h"
 #include "type.h"
 #include "optimization.h"
 
-int main() {
+TEST(AddFoldingDCE, test) {
     std::string name = "Constant folding";
     Module application(name);
     auto s = application.getName();
@@ -20,11 +20,16 @@ int main() {
     b0->insert(const2);
     b0->insert(add);
     b0->insert(ret);
-    application.print();
     ConstantFoldingOptimization opt1(&application);
     opt1.run();
-    application.print();
-/*
+    auto opResult = application.getBBs()[0]->getOps()[0];
+    auto const5 = dynamic_cast<ConstantOperation*>(opResult);
+    EXPECT_NE(const5, nullptr);
+    EXPECT_EQ(const5->getValue(), 11);
+    EXPECT_EQ(const5->getDType(), "I32");
+}
+
+TEST(MulFoldingDCE, test2) {
     std::string name = "Constant folding";
     Module application(name);
     auto s = application.getName();
@@ -41,9 +46,11 @@ int main() {
     b0->insert(const2);
     b0->insert(add);
     b0->insert(ret);
-    application.print();
     ConstantFoldingOptimization opt1(&application);
     opt1.run();
-    application.print();
-*/
+    auto opResult = application.getBBs()[0]->getOps()[0];
+    auto const5 = dynamic_cast<ConstantOperation*>(opResult);
+    EXPECT_NE(const5, nullptr);
+    EXPECT_EQ(const5->getValue(), 14);
+    EXPECT_EQ(const5->getDType(), "I32");
 }
