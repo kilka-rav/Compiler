@@ -42,6 +42,7 @@ public:
     int getNumDFS() const;
     void print_ids() const;
     bool replace(Operation* dst, Operation* src);
+    bool eraseWithoutResult(Operation* op);
     bool replaceAllUses(Operation* oldOp, Operation* newOp);
     void deleteOp(int idx);
     std::unordered_set<Operation*> liveSet;
@@ -100,10 +101,11 @@ private:
     void expireOldIntervals(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, std::stack<int>& freeReg, int idx, AllocInfo& info);
     void spillAtInterval(Operation* op, std::vector<std::pair<Operation*, std::pair<int, int>>>& active, int idx, int idx2, AllocInfo& info);
     std::vector<BasicBlock*> linearOrder();
-    std::vector<BasicBlock*> rpo();
 public:
     Module(std::string& _name) : name(_name) {}
     std::string& getName() const;
+    std::vector<BasicBlock*> rpo();
+    void eraseWithoutResult(Operation* op);
     void replace(Operation* dest, Operation* src);
     void replaceAllUses(Operation* oldOp, Operation* newOp);
     Operation* getOperation(int bb, int index) const;
@@ -119,6 +121,7 @@ public:
     void buildImmediateDominators();
     bool isDominator(int idxA, int idxB);
     void printLoops() const;
+    int getBBFromOp(Operation* op) const;
     bool haveUsers(int idx) const;
     int getNumUsers(int idx) const;
     void deleteOp(Operation* op);
@@ -320,4 +323,20 @@ public:
     std::string getDirection() const { return direction; }
     std::pair<int, int> getA() const { return std::make_pair(left.first->getID(), left.second); }
     std::pair<int, int> getB() const { return std::make_pair(right.first->getID(), right.second); }
+};
+
+class ZeroCheckOperation : public Operation {
+public:
+    ZeroCheckOperation(int idx, int prev) : Operation("ZeroCheck", idx, {prev}) {}
+    void print() const {
+        std::cout << " \t  %" << getIndex() << " " << getName() << " %" << getOperands()[0] << std::endl;
+    }
+};
+
+class BoundsCheckOperation : public Operation {
+public:
+    BoundsCheckOperation(int idx, int enter, int len) : Operation("BoundsCheck", idx, {enter, len}) {}
+    void print() const {
+        std::cout << " \t  %" << getIndex() << " " << getName() << " %" << getOperands()[0] << ", %" << getOperands()[1] << std::endl;
+    }
 };

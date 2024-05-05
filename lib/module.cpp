@@ -124,7 +124,7 @@ bool BasicBlock::isMarked() const {
 }
 
 bool BasicBlock::isMarkedCondition() const {
-    if (number_dfs_condition == -1){
+    if (number_dfs_condition == -1) {
         return false;
     }
     return true;
@@ -152,6 +152,20 @@ bool BasicBlock::replace(Operation* dest, Operation* src) {
     }
     return false;
 }
+
+bool BasicBlock::eraseWithoutResult(Operation* op2) {
+    int index = 0;
+    for(auto& op : getOps()) {
+        if (op == op2) {
+            ops.erase(ops.begin() + index);
+            delete op2;
+            return true;
+        }
+        index++;
+    }
+    return false;
+}
+
 
 bool BasicBlock::replaceAllUses(Operation* oldOp, Operation* newOp) {
     for(auto&& op : getOps()) {
@@ -245,6 +259,17 @@ void Module::buildDomtree() {
     }
 }
 
+int Module::getBBFromOp(Operation* op2) const {
+    for(auto&& bb : getBBs()) {
+        for(auto&& op : bb->getOps()) {
+            if (op == op2) {
+                return bb->getID();
+            }
+        }
+    }
+    return -1;
+}
+
 bool Module::isDominator(int idxA, int idxB) {
     if (idxA == idxB) {
         return false;
@@ -296,6 +321,15 @@ void Module::replace(Operation* dest, Operation* src) {
     auto&& tmp_bbs = getBBs();
     for(auto& bb : tmp_bbs) {
         if (bb->replace(dest, src)) {
+            return;
+        }
+    }
+}
+
+void Module::eraseWithoutResult(Operation* op) {
+    auto&& tmp_bbs = getBBs();
+    for(auto& bb : tmp_bbs) {
+        if (bb->eraseWithoutResult(op)) {
             return;
         }
     }
@@ -599,7 +633,7 @@ void Operation::setIndex(int newIdx) {
 }
 
 bool Operation::hasMemoryEffect() const {
-    if (name == "Return" || name == "Load") {
+    if (name == "Return" || name == "Load" || name == "ZeroCheck" || name == "BoundsCheck" || name == "Jump") {
         return true;
     }
     return false;

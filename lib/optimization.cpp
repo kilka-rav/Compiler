@@ -1,5 +1,17 @@
 #include "../include/optimization.h"
 
+bool PatternBase::isSameOperands(Operation* op1, Operation* op2) const {
+    if (op1->getOperands().size() != op2->getOperands().size()) {
+        return false;
+    }
+    for(auto index = 0; index < op1->getOperands().size(); ++index) {
+        if (op1->getOperands()[index] != op2->getOperands()[index]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void OptimizationBase::addPattern(PatternBase* pattern) {
     patterns.push_back(pattern);
 }
@@ -27,6 +39,40 @@ void OptimizationBase::runOnOperation() {
                 }
             }
         }
+}
+
+void OptimizationBase::runOnOperationReverse() {
+    ir->DFS();
+    bool irWasChanged = true;
+    auto order = ir->rpo();
+
+    while(irWasChanged) {
+        irWasChanged = false;
+        for(auto&& bb : order) {
+            for(int idx = bb->getOps().size() - 1; idx >= 0; idx--) {
+                auto op = bb->getOps()[idx];
+                irWasChanged |= applyPatterns(op, ir);
+            }
+        }
+    }
+}
+
+bool CheckEliminationPattern::matchAndRewrite(Operation* op, Module* ir) {
+    if (op->getName() == "BoundsCheck" || op->getName() == "ZeroCheck") {
+        for(auto&& bb : ir->getBBs()) {
+            for(auto&& op2 : bb->getOps()) {
+                if (op->getName() == op2->getName() && op != op2 && isSameOperands(op, op2)) {
+                    if (ir->isDominator(ir->getBBFromOp(op), ir->getBBFromOp(op2))) {
+                        ir->eraseWithoutResult(op2);
+                    } else {
+                        ir->eraseWithoutResult(op);
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 bool DCEPattern::matchAndRewrite(Operation* op, Module* ir) {

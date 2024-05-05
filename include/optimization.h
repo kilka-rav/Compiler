@@ -7,6 +7,7 @@ class PatternBase {
 public:
     PatternBase(std::string name) : nameOp(name) {}
     virtual bool matchAndRewrite(Operation* op, Module* ir) = 0; 
+    bool isSameOperands(Operation* op1, Operation* op2) const;
     virtual ~PatternBase() {}
 };
 
@@ -21,6 +22,7 @@ public:
     bool applyPatterns(Operation* op, Module* ir);
     virtual ~OptimizationBase() {}
     void runOnOperation();
+    void runOnOperationReverse();
     
 };
 
@@ -83,6 +85,11 @@ struct AndEqualPattern final : public PatternBase {
     bool matchAndRewrite(Operation *op, Module* ir) override;
 };
 
+struct CheckEliminationPattern final : public PatternBase {
+    CheckEliminationPattern() : PatternBase("CheckElimination") {}
+    bool matchAndRewrite(Operation* op, Module* ir) override;
+};
+
 class ConstantFoldingOptimization final : public OptimizationBase {
 public:
     ConstantFoldingOptimization(Module* _ir) : OptimizationBase(_ir) {}
@@ -126,5 +133,16 @@ struct PeepholesOptimization final : OptimizationBase {
         runOnOperation();
 
     }
-        
+};
+
+class CheckElimination : public OptimizationBase {
+public:
+    CheckElimination(Module* _ir) : OptimizationBase(_ir) {}
+    void run() override {
+        DCEPattern pattern1;
+        CheckEliminationPattern pattern2;
+        addPattern(&pattern1);
+        addPattern(&pattern2);
+        runOnOperationReverse();
+    }
 };

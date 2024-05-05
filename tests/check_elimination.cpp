@@ -1,10 +1,10 @@
-#include <iostream>
+#include <gtest/gtest.h>
 #include "module.h"
 #include "type.h"
 #include "optimization.h"
 
-int main() {
-    std::string name = "Peepholes";
+TEST(CheckElimination, test) {
+    std::string name = "CheckElimination";
     Module application(name);
     auto s = application.getName();
     application.setArgument("I32");
@@ -38,8 +38,28 @@ int main() {
     b1->insert(ret);
 
     application.print();
+
+    auto different_elimination = application.getBBs()[1]->getOps().size();
     auto opt = CheckElimination(&application);
     opt.run();
+
+    auto opResult = application.getBBs()[0]->getOps()[2];
+    auto opResult2 = application.getBBs()[0]->getOps()[3];
+
+    auto zeroCheck = dynamic_cast<ZeroCheckOperation*>(opResult);
+    auto boundsCheck = dynamic_cast<BoundsCheckOperation*>(opResult2);
+    EXPECT_NE(zeroCheck, nullptr);
+    EXPECT_EQ(zeroCheck->getName(), "ZeroCheck");
+    EXPECT_EQ(zeroCheck->getOperands()[0], 0);
+
+    EXPECT_NE(boundsCheck, nullptr);
+    EXPECT_EQ(boundsCheck->getName(), "BoundsCheck");
+    EXPECT_EQ(boundsCheck->getOperands()[0], 0);
+    EXPECT_EQ(boundsCheck->getOperands()[1], 1);    
+
+    different_elimination -= application.getBBs()[1]->getOps().size();
+
+    EXPECT_EQ(different_elimination, 2);
 
     application.print();
 
