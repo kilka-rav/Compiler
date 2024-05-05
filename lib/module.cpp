@@ -153,6 +153,17 @@ bool BasicBlock::replace(Operation* dest, Operation* src) {
     return false;
 }
 
+bool BasicBlock::replaceAllUses(Operation* oldOp, Operation* newOp) {
+    for(auto&& op : getOps()) {
+        for(auto&& operand : op->getOperands()) {
+            if (operand == oldOp->getIndex()) {
+                op->changeOperand(operand, newOp->getIndex());
+            }
+        }
+    }
+    return true;
+}
+
 std::vector<BasicBlock*> BasicBlock::getPrev() const {
     return prev_id;
 }
@@ -287,6 +298,12 @@ void Module::replace(Operation* dest, Operation* src) {
         if (bb->replace(dest, src)) {
             return;
         }
+    }
+}
+
+void Module::replaceAllUses(Operation* oldOp, Operation* newOp) {
+    for(auto&& bb : getBBs()) {
+        bb->replaceAllUses(oldOp, newOp);
     }
 }
 
@@ -551,6 +568,20 @@ bool Module::haveUsers(int idx) const {
     return false;
 }
 
+int Module::getNumUsers(int idx) const {
+    int numUsers = 0;
+    for(auto& bb : basicBlocks) {
+        for(auto& op : bb->getOps()) {
+            for(auto operand : op->getOperands()) {
+                if (operand == idx) {
+                    numUsers++;
+                }
+            }
+        }
+    }
+    return numUsers;
+}
+
 std::vector<LoopInfo> Module::getLoops() const {
     return loops;
 }
@@ -559,12 +590,16 @@ int Operation::getIndex() const {
     return idx;
 }
 
+void Operation::changeOperand(int oldIndex, int newIndex) {
+    std::replace(operands.begin(), operands.end(), oldIndex, newIndex);
+}
+
 void Operation::setIndex(int newIdx) {
     idx = newIdx;
 }
 
 bool Operation::hasMemoryEffect() const {
-    if (name == "Return" || name == "Move") {
+    if (name == "Return" || name == "Load") {
         return true;
     }
     return false;

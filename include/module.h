@@ -42,6 +42,7 @@ public:
     int getNumDFS() const;
     void print_ids() const;
     bool replace(Operation* dst, Operation* src);
+    bool replaceAllUses(Operation* oldOp, Operation* newOp);
     void deleteOp(int idx);
     std::unordered_set<Operation*> liveSet;
     std::vector<Operation*> getOps() const {
@@ -104,6 +105,7 @@ public:
     Module(std::string& _name) : name(_name) {}
     std::string& getName() const;
     void replace(Operation* dest, Operation* src);
+    void replaceAllUses(Operation* oldOp, Operation* newOp);
     Operation* getOperation(int bb, int index) const;
     void setReturnType(const std::string& _returnType);
     void setName(const std::string& _name);
@@ -118,6 +120,7 @@ public:
     bool isDominator(int idxA, int idxB);
     void printLoops() const;
     bool haveUsers(int idx) const;
+    int getNumUsers(int idx) const;
     void deleteOp(Operation* op);
     std::vector<BasicBlock*> getBBs() const { return basicBlocks; }
     virtual ~Module() {
@@ -167,6 +170,7 @@ public:
     std::vector<int> getOperands() const { return operands; }
     std::string getName() const;
     void setIndex(int newIndex);
+    void changeOperand(int oldIndex, int newIndex);
     bool hasMemoryEffect() const;
     virtual ~Operation() {}
 };
@@ -286,7 +290,7 @@ public:
     ReturnOperation(int idx) : use_void(true), Operation("Return", idx) {}
     void print() const {
         if (!use_void) {
-            std::cout << "\t  %" << getIndex() << " " <<  getName() << " [" << prev.first->getID() << ": %" << prev.second << "]" << std::endl;
+            std::cout << "\t  %" << getIndex() << " " <<  getName() << " %" << getOperands()[0] << std::endl;
         } else {
             std::cout << "\t  %" << getIndex() << " " <<  getName() << " void" << std::endl;
         }
