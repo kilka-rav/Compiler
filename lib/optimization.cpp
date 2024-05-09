@@ -361,3 +361,103 @@ bool AndEqualPattern::matchAndRewrite(Operation *op, Module* ir) {
     }
     return false;
 }
+
+BasicBlock* StaticInlinePattern::splitCallerBlock(Module* ir, Module* callee, Operation* op) {
+    auto newBB = ir->create<BasicBlock>((int)(ir->getBBs().size() + callee->getBBs().size()));
+    auto bb = ir->getBBs()[ir->getBBFromOp(op)];
+    bool older = false;
+    int idx = 0;
+    for(auto&& op2 : bb->getOps()) {
+        if (older) {
+            newBB->insert(op2);
+            bb->deleteOp(idx);
+        }
+        older |= (op == op2);
+        idx++;
+    }
+    return newBB;
+}
+
+void StaticInlinePattern::updateDF(Module* ir, Module* callee, Operation* op, BasicBlock* newBB) {
+    std::vector<int> returns;
+    std::vector<BasicBlock*> inputs;
+    std::vector<Operation*> prevOps;
+    int newidx;
+
+    for(auto idx : op->getOperands()) {
+        prevOps.push_back(ir->getOperation(idx));
+    }
+
+    for(auto&& bb : callee->getBBs()) {
+        int index = 0;
+        for(auto&& op2 : bb->getOps()) {
+            if (op2->getName() == "Move") {
+                auto mov = dynamic_cast<MoveOperation*>(op2);
+                callee->replaceAllUses(mov, prevOps[mov->getArg()]);                
+                bb->deleteOp(index);
+            } else if (op2->getName() == "Return") {
+                returns.push_back(op2->getOperands()[0]);
+                inputs.push_back(bb);
+                newidx = op2->getIndex();
+                bb->deleteOp(index);
+            } else {
+                index++;
+            }
+        }
+    }
+    auto newPhi = ir->create<PhiOperation>(newidx);
+
+    newPhi->addInputs(inputs, returns);
+    newBB->insertHead(newPhi);
+    ir->replaceAllUses(op, newPhi);
+    
+}
+
+void StaticInlinePattern::moveConstants(Module* ir, Module* callee) {
+    for(auto&& bb : callee->getBBs()) {
+        int index = 0;
+        for(auto&& op : bb->getOps()) {
+            if (op->getName() == "Constant") {
+                ir->getBBs()[0]->insert(op);
+                bb->deleteOp(index);
+            } else {
+                index++;
+            }
+        }
+    }
+
+}
+
+void StaticInlinePattern::connectBlocks(Module* ir, Module* callee, BasicBlock* startBB, BasicBlock* endBB, Operation* op) {
+
+    for(auto&& bb : callee->getBBs()) {
+        ir->insertIndex(bb);
+    }
+
+    auto firstInlinedBB = ir->getBBs()[startBB->getID() + 1];
+    startBB->addSucessor({firstInlinedBB});
+    firstInlinedBB->addPredessor({startBB});
+    auto jmp = ir->create<JumpOperation>(0, callee->getBBs()[0]);
+    ir->replace(op, jmp);
+
+    auto phi = dynamic_cast<PhiOperation*>(endBB->getOps()[0]);
+    
+    for(auto input : phi->getInputs()) {
+        endBB->addPredessor({input});
+        input->addSucessor({endBB});
+    }
+}
+
+bool StaticInlinePattern::matchAndRewrite(Operation* op, Module* ir) {
+    if (op->getName() == "CallStatic") {
+        auto callOp = dynamic_cast<CallStaticOperation*>(op);
+        auto callee = callOp->getCallee();
+        auto newBB = splitCallerBlock(ir, callee, op);
+        updateDF(ir, callee, op, newBB);
+        moveConstants(ir, callee);
+        auto startBB = ir->getBBs()[ir->getBBFromOp(op)];
+        connectBlocks(ir, callee, startBB, newBB, op);
+        return true;   
+    }
+    return false;
+}

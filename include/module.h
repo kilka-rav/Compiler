@@ -29,6 +29,7 @@ public:
     void print() const;
     int getID() const { return id; }
     void insert(Operation* op);
+    void insertHead(Operation* op);
     std::vector<BasicBlock*> getPrev() const;
     std::vector<BasicBlock*> getNext() const;
     void addSucessor(std::initializer_list<BasicBlock*> bbs);
@@ -115,6 +116,7 @@ public:
     void setArguments(const std::vector<std::string>& inputs);
     void print() const;
     void insert(BasicBlock* bb);
+    void insertIndex(BasicBlock* bb);
     void DFS();
     void printDFS() const;
     void printDFSCondition() const;
@@ -123,6 +125,7 @@ public:
     void printLoops() const;
     int getBBFromOp(Operation* op) const;
     bool haveUsers(int idx) const;
+    Operation* getOperation(int ssa_value) const;
     int getNumUsers(int idx) const;
     void deleteOp(Operation* op);
     std::vector<BasicBlock*> getBBs() const { return basicBlocks; }
@@ -160,6 +163,13 @@ inline BasicBlock* Module::create<BasicBlock>() {
     return bb;
 }
 
+template <>
+inline BasicBlock* Module::create<BasicBlock>(int idx) {
+    BasicBlock* bb = new BasicBlock(idx, {}, {});
+    basicBlocks.push_back(bb);
+    return bb;
+}
+
 class Operation {
 private:
     std::string name;
@@ -175,6 +185,8 @@ public:
     void setIndex(int newIndex);
     void changeOperand(int oldIndex, int newIndex);
     bool hasMemoryEffect() const;
+    void setOperands(std::initializer_list<int> ops) { operands = ops; }
+    void setOperands(std::vector<int> ops) { operands = ops; }
     virtual ~Operation() {}
 };
 
@@ -210,10 +222,29 @@ private:
 public:
     PhiOperation(int idx, std::initializer_list<BasicBlock*> _inputs, std::initializer_list<int> _ops) : inputBB(_inputs), ops(_ops), Operation("Phi", idx, _ops) {}
     PhiOperation(int idx) : Operation("Phi", idx) {}
+    std::vector<BasicBlock*> getInputs() const { return inputBB; }
     void addInputs(std::initializer_list<BasicBlock*> _inputs, std::initializer_list<int> _ops) {
         inputBB = _inputs;
         ops = _ops;
+        setOperands(_ops);
     }
+
+    void addInputs(std::vector<BasicBlock*> _inputs, std::vector<int> _ops) {
+        inputBB = _inputs;
+        ops = _ops;
+        setOperands(_ops);
+    }
+
+    void addInputs(std::initializer_list<int> _ops) { 
+        ops = _ops; 
+        setOperands(_ops);    
+    }
+
+    void addInputs(std::vector<int> _ops) { 
+        ops = _ops; 
+        setOperands(_ops);    
+    }
+
     void print() const {
         std::cout << "\t  %" << getIndex() << " " <<  getName() << " ";
         for(size_t i = 0; i < inputBB.size(); ++i) {
@@ -268,8 +299,8 @@ class BinaryOperation : public Operation {
 public:
     BinaryOperation(int idx, std::string _type, std::pair<BasicBlock*, int> l, std::pair<BasicBlock*, int> r) : left(l), right(r), Operation(_type, idx, {l.second, r.second}) {}
     void print() const {
-        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : [" << left.first->getID() << " : %" << left.second << "], [" 
-            << right.first->getID() << " : %" << right.second << "]" << std::endl;
+        std::cout << "\t  %" << getIndex() << " " <<  getName() << " " << " : [" << left.first->getID() << " : %" << getOperands()[0] << "], [" 
+            << right.first->getID() << " : %" << getOperands()[1] << "]" << std::endl;
     }
     std::pair<int, int> getA() const { return std::make_pair(left.first->getID(), left.second); }
     std::pair<int, int> getB() const { return std::make_pair(right.first->getID(), right.second); }
@@ -300,14 +331,16 @@ public:
 
     }
 };
-
 class MoveOperation : public Operation {
     std::string prev;
+    int parameter = 0;
 public:
     MoveOperation(int idx, std::string p) : prev(p), Operation("Move", idx) {}
+    MoveOperation(int idx, int arg) : prev("arg" + std::to_string(arg)), parameter(arg), Operation("Move", idx) {}
     void print() const {
         std::cout << "\t  %" << getIndex() << " " <<  getName() << " %" << prev << std::endl;
     }
+    int getArg() const { return parameter; }
 };
 
 class ShiftOperation : public Operation {
@@ -339,4 +372,18 @@ public:
     void print() const {
         std::cout << " \t  %" << getIndex() << " " << getName() << " %" << getOperands()[0] << ", %" << getOperands()[1] << std::endl;
     }
+};
+
+class CallStaticOperation : public Operation {
+    Module* callee;
+public:
+    CallStaticOperation(int idx, Module* func) : callee(func), Operation("CallStatic", idx) {}
+    void print() const {
+        std::cout << " \t  %" << getIndex() << " " << getName() << " @" << callee->getName();
+        for(auto op : getOperands()) {
+            std::cout << " %" << op << ",";
+        }
+        std::cout << std::endl;
+    }
+    Module* getCallee() const { return callee; }
 };

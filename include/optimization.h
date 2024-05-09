@@ -90,6 +90,18 @@ struct CheckEliminationPattern final : public PatternBase {
     bool matchAndRewrite(Operation* op, Module* ir) override;
 };
 
+class StaticInlinePattern final : public PatternBase {
+private:
+    BasicBlock* splitCallerBlock(Module* ir, Module* callee, Operation* op);
+    void updateDF(Module* ir, Module* callee, Operation* op, BasicBlock* bb);
+    void moveConstants(Module* ir, Module* callee);
+    void connectBlocks(Module* ir, Module* callee, BasicBlock* startBB, BasicBlock* endBB, Operation* op);
+
+public:
+    StaticInlinePattern() : PatternBase("CallStatic") {}
+    bool matchAndRewrite(Operation* op, Module* ir) override;
+};
+
 class ConstantFoldingOptimization final : public OptimizationBase {
 public:
     ConstantFoldingOptimization(Module* _ir) : OptimizationBase(_ir) {}
@@ -144,5 +156,16 @@ public:
         addPattern(&pattern1);
         addPattern(&pattern2);
         runOnOperationReverse();
+    }
+};
+
+class StaticInline : public OptimizationBase {
+
+public:
+    StaticInline(Module* _ir) : OptimizationBase(_ir) {}
+    void run() override {
+        StaticInlinePattern pattern;
+        addPattern(&pattern);
+        runOnOperation();
     }
 };

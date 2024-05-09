@@ -33,6 +33,11 @@ void Module::insert(BasicBlock* b) {
     needDFS = true;
 }
 
+void Module::insertIndex(BasicBlock* b) {
+    basicBlocks.insert(basicBlocks.begin() + b->getID(), b);
+    needDFS = true;
+}
+
 void Module::setArgument(const std::string& inputType) {
     inputs.push_back(inputType);
 }
@@ -94,6 +99,10 @@ void BasicBlock::print() const {
 
 void BasicBlock::insert(Operation* op) {
     ops.push_back(op);
+}
+
+void BasicBlock::insertHead(Operation* op) {
+    ops.insert(ops.begin(), op);
 }
 
 int BasicBlock::getNumDFS() const {
@@ -460,6 +469,17 @@ int getLiveNumber(Operation* op, std::vector<std::pair<Operation*, int>>& liveNu
     return -1;
 }
 
+Operation* Module::getOperation(int ssa) const {
+    for(auto&& bb : getBBs()) {
+        for(auto&& op : bb->getOps()) {
+            if (op->getIndex() == ssa) {
+                return op;
+            }
+        }
+    }
+    return nullptr;
+}
+
 Operation* getOpFromIndex(std::vector<BasicBlock*>& bbs, int index) {
     for(auto&& bb : bbs) {
         for(auto&& op : bb->getOps()) {
@@ -675,8 +695,9 @@ void Module::deleteOp(Operation* unusedOp) {
         for(auto& op : bb->getOps()) {
             if (op == unusedOp) {
                 bb->deleteOp(idx);
+            } else {
+                idx++;
             }
-            idx++;
         }
     }
 }
