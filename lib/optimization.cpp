@@ -17,14 +17,12 @@ void OptimizationBase::addPattern(PatternBase* pattern) {
 }
 
 bool OptimizationBase::applyPatterns(Operation* op, Module* ir) {
-    bool irWasChanged = false;
     for(auto pattern : patterns) {
-        if (irWasChanged) {
+        if (pattern->matchAndRewrite(op, ir)) {
             return true;
         }
-        irWasChanged |= pattern->matchAndRewrite(op, ir);
     }
-    return irWasChanged;
+    return false;
 }
 
 void OptimizationBase::runOnOperation() {
@@ -255,6 +253,7 @@ bool ShiftZeroPattern::matchAndRewrite(Operation *op, Module* ir) {
         if (op1->getName() != "Constant" && op2->getName() != "Constant") {
             return false;
         }
+        /*
         if (op1->getName() == "Constant") {
             ConstantOperation* const1 = dynamic_cast<ConstantOperation*>(op1);
             if (const1->getValue() == 0) {
@@ -262,6 +261,7 @@ bool ShiftZeroPattern::matchAndRewrite(Operation *op, Module* ir) {
                 return true;
             }
         }
+        */
         if (op2->getName() == "Constant") {
             ConstantOperation* const2 = dynamic_cast<ConstantOperation*>(op2);
             if (const2->getValue() == 0) {
