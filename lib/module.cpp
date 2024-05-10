@@ -162,6 +162,17 @@ bool BasicBlock::replace(Operation* dest, Operation* src) {
     return false;
 }
 
+void Module::replace(BasicBlock* dst, BasicBlock* src) {
+    int index = 0;
+    for(auto&& b : basicBlocks) {
+        if (b == dst) {
+            basicBlocks.erase(basicBlocks.begin() + index);
+        } else {
+            index++;
+        }
+    }
+}
+
 bool BasicBlock::eraseWithoutResult(Operation* op2) {
     int index = 0;
     for(auto& op : getOps()) {
@@ -225,6 +236,12 @@ BasicBlock::BasicBlock(int _id, std::initializer_list<BasicBlock*> _prev, std::i
     id = _id;
     prev_id = _prev;
     next_id = _next;
+}
+
+void BasicBlock::copyBB(BasicBlock* b) {
+    prev_id = b->getPrev();
+    next_id = b->getNext();
+    id = b->getID();
 }
 
 BasicBlock::~BasicBlock() {

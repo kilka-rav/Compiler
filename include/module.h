@@ -26,6 +26,7 @@ private:
 public:
     BasicBlock() = default;
     BasicBlock(int _id, std::initializer_list<BasicBlock*> _prev, std::initializer_list<BasicBlock*> _next);
+    BasicBlock(int _id) : id(_id) {}
     void print() const;
     int getID() const { return id; }
     void insert(Operation* op);
@@ -34,6 +35,8 @@ public:
     std::vector<BasicBlock*> getNext() const;
     void addSucessor(std::initializer_list<BasicBlock*> bbs);
     void addPredessor(std::initializer_list<BasicBlock*> bbs);
+    void addSucessor(std::vector<BasicBlock*> bbs) { next_id = bbs; }
+    void addPredessor(std::vector<BasicBlock*> bbs) { prev_id = bbs; }
     void resettingDFS();
     void resettingDFSCondition();
     void setNumberDFS(int numDFS);
@@ -42,6 +45,7 @@ public:
     bool isMarkedCondition() const;
     int getNumDFS() const;
     void print_ids() const;
+    void copyBB(BasicBlock* bb);
     bool replace(Operation* dst, Operation* src);
     bool eraseWithoutResult(Operation* op);
     bool replaceAllUses(Operation* oldOp, Operation* newOp);
@@ -108,6 +112,7 @@ public:
     std::vector<BasicBlock*> rpo();
     void eraseWithoutResult(Operation* op);
     void replace(Operation* dest, Operation* src);
+    void replace(BasicBlock* dst, BasicBlock* src);
     void replaceAllUses(Operation* oldOp, Operation* newOp);
     Operation* getOperation(int bb, int index) const;
     void setReturnType(const std::string& _returnType);

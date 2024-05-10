@@ -391,18 +391,23 @@ void StaticInlinePattern::updateDF(Module* ir, Module* callee, Operation* op, Ba
     for(auto&& bb : callee->getBBs()) {
         int index = 0;
         for(auto&& op2 : bb->getOps()) {
+            
             if (op2->getName() == "Move") {
                 auto mov = dynamic_cast<MoveOperation*>(op2);
                 callee->replaceAllUses(mov, prevOps[mov->getArg()]);                
                 bb->deleteOp(index);
+                delete mov;
             } else if (op2->getName() == "Return") {
+                auto ret = dynamic_cast<ReturnOperation*>(op2);
                 returns.push_back(op2->getOperands()[0]);
                 inputs.push_back(bb);
                 newidx = op2->getIndex();
                 bb->deleteOp(index);
+                delete ret;
             } else {
                 index++;
             }
+            
         }
     }
     auto newPhi = ir->create<PhiOperation>(newidx);
@@ -411,6 +416,7 @@ void StaticInlinePattern::updateDF(Module* ir, Module* callee, Operation* op, Ba
     newBB->insertHead(newPhi);
     ir->replaceAllUses(op, newPhi);
     
+
 }
 
 void StaticInlinePattern::moveConstants(Module* ir, Module* callee) {
@@ -429,16 +435,19 @@ void StaticInlinePattern::moveConstants(Module* ir, Module* callee) {
 }
 
 void StaticInlinePattern::connectBlocks(Module* ir, Module* callee, BasicBlock* startBB, BasicBlock* endBB, Operation* op) {
+    auto jmp = ir->create<JumpOperation>(0, callee->getBBs()[0]);
+    ir->replace(op, jmp);
 
     for(auto&& bb : callee->getBBs()) {
         ir->insertIndex(bb);
+        auto cur = callee->create<BasicBlock>(bb->getID());
+        cur->copyBB(bb);
+        callee->replace(bb, cur);
     }
 
     auto firstInlinedBB = ir->getBBs()[startBB->getID() + 1];
     startBB->addSucessor({firstInlinedBB});
     firstInlinedBB->addPredessor({startBB});
-    auto jmp = ir->create<JumpOperation>(0, callee->getBBs()[0]);
-    ir->replace(op, jmp);
 
     auto phi = dynamic_cast<PhiOperation*>(endBB->getOps()[0]);
     
